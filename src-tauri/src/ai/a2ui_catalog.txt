@@ -1,0 +1,100 @@
+Catalog id: zara:notch/v1
+
+### Text
+A line or short paragraph of plain text.
+Props: text (a string, {"path":"/key"}, or {"call":"formatString","args":{"value":"Hi ${/name}"}}), variant? (h2, body or caption), color? (blue, green, amber, red, purple, teal, pink, slate)
+
+### Column
+Stacks its children vertically.
+Props: children (ids), align? (start, center, end or stretch)
+
+### Row
+Places its children side by side; wraps when there is no room.
+Props: children (ids), align?
+
+### Card
+Groups one child inside a bordered card, optionally tinted with a colour.
+Props: child (an id), color? (blue, green, amber, red, purple, teal, pink, slate)
+
+### List
+A vertical list of rows with dividers. Give ids, or repeat one component for each item of a list in the data model.
+Props: children (ids, or {"path":"/items","componentId":"row"} where "row" reads item fields with relative paths such as {"path":"name"})
+
+### Divider
+A thin horizontal rule.
+Props: none
+
+### Icon
+A small icon.
+Props: name (check, clock, calendar, mail, info, warning, star, timer, copy, link, note), color? (blue, green, amber, red, purple, teal, pink, slate)
+
+### Badge
+A small coloured pill for a status or tag, such as On track or New.
+Props: label, color? (blue, green, amber, red, purple, teal, pink, slate)
+
+### Callout
+A highlighted note with a coloured edge and icon. The tone sets the colour: info is blue, success green, warning amber, error red, tip purple.
+Props: tone (info, success, warning, error, tip), title?, text
+
+### Progress
+A horizontal progress bar with a percentage.
+Props: value (0 to 100, or {"path":"/key"}), label?, caption?, color? (blue, green, amber, red, purple, teal, pink, slate)
+
+### Ring
+A circular gauge with the percentage in the middle, for one standout number such as battery or completion.
+Props: value (0 to 100, or {"path":"/key"}), label?, caption?, color? (blue, green, amber, red, purple, teal, pink, slate)
+
+### KeyValue
+Labelled details as a tidy two-column list, such as a flight, a booking or a spec.
+Props: items ([{"label":"Gate","value":"B12","color"?}], 1 to 8)
+
+### Timeline
+Events in order down a vertical line, each with a coloured dot.
+Props: items ([{"title":"Shipped","time":"Tue","description"?,"color"?}], 2 to 8)
+
+### Checklist
+Things to do, each shown as done or not done.
+Props: items ([{"text":"Pack passport","done":true}], 1 to 10)
+
+### Button
+A button. Its child is the Text shown on it. Each button does exactly one thing when clicked.
+Props: child (id of a Text), action, variant? (primary or borderless), checks? ([{"call":"required","args":{"value":{"path":"/name"}},"message":"Enter a name"}], the button stays disabled until every check is true). action is either {"event":{"name":"short_name","context":{"key":{"path":"/name"}}}}, which sends the user's choice back to you as their next message, or {"functionCall":{"call":"<function>","args":{...}}} which runs in the app. Functions: startTimer {minutes: 1-180}, openPanel {panel: calendar|command-center|devices}, copyText {text}, openUrl {url: an https link}, saveNote {text} (the user is asked to confirm)
+
+### TextField
+A text input bound to a value in the data model.
+Props: label, value ({"path":"/name"}), variant? (shortText or longText)
+
+### CheckBox
+A checkbox bound to a true or false value in the data model.
+Props: label, value ({"path":"/agree"})
+
+### ChoicePicker
+A choice between a few options, bound to the chosen value (a list for multiple).
+Props: options ([{"label":"Short","value":"short"}], 2 to 8), value ({"path":"/length"}), variant? (mutuallyExclusive or multiple)
+
+### Stat
+A row of up to 4 labeled metric cards, each with an optional trend delta. USE WHEN: Highlighting 2-4 standalone key numbers side by side (e.g. revenue, active users, conversion rate) that the user should compare at a glance. DO NOT USE WHEN: Never for a single number — write it directly in the sentence instead. Never for a series of values over time (use chart) or a full record with many fields (use table).
+Props: items, exactly as in the zara:stat block
+
+### Chart
+A line, bar, area, or pie chart with up to 4 series over up to 30 points. Optionally set a "colors" array (hex, one entry per series) to use a custom palette instead of the default. USE WHEN: 3 or more numeric data points over an ordered dimension (time, category) where a visual trend or comparison adds clarity beyond the numbers themselves. DO NOT USE WHEN: Never for a single number — write it in the sentence, or use stat for 2-4 standalone numbers. Never for fewer than 3 points or for a qualitative/text comparison.
+Props: kind, title, data, series, as in the zara:chart block
+
+### Table
+A sortable table with up to 4 columns and up to 12 rows. USE WHEN: Structured multi-field records (3 or more rows) the user should scan or compare — pricing tiers, spec sheets, search results. DO NOT USE WHEN: Never for 1-2 items — write them in prose. Never for a single-column list — use a markdown bullet list instead.
+Props: columns, rows, as in the zara:table block
+
+### Carousel
+A horizontally-scrollable set of 2-6 titled cards, browsed one at a time. Each item may optionally set its own hex "color" for a distinct accent. USE WHEN: 3-6 distinct options, recommendations, or next steps the user should browse — product picks, plan tiers, suggested actions. DO NOT USE WHEN: Never for fewer than 3 items — use prose or stat. Never for structured data with several fields per item — use table.
+Props: items, as in the zara:carousel block
+
+### Diagram
+A Mermaid diagram (flowchart, sequence diagram, or entity relationship diagram). USE WHEN: Explaining a process, architecture, sequence of interactions, or relationships between a handful of entities where the structure itself is the point. DO NOT USE WHEN: Never for numeric/data comparisons — use chart, table, or stat instead. Never for a simple linear list — use a markdown numbered list. Keep diagrams to a handful of nodes; this renders at a fixed ~200px height.
+Props: source, as in the zara:mermaid block
+
+Example (the body of an `a2ui` fence):
+```a2ui
+{"version":"v0.9","createSurface":{"surfaceId":"plan","catalogId":"zara:notch/v1"}}
+{"version":"v0.9","updateComponents":{"surfaceId":"plan","components":[{"id":"root","component":"Card","child":"body"},{"id":"body","component":"Column","children":["heading","status","summary","tip","start"]},{"id":"heading","component":"Text","text":"Focus block","variant":"h2"},{"id":"summary","component":"Text","text":{"call":"formatString","args":{"value":"${/minutes} minutes, starting now"}}},{"id":"start","component":"Button","child":"start-label","variant":"primary","action":{"functionCall":{"call":"startTimer","args":{"minutes":25}}}},{"id":"start-label","component":"Text","text":"Start 25 minute timer"},{"id":"status","component":"Badge","label":"Ready","color":"green"},{"id":"tip","component":"Callout","tone":"tip","text":"Take a short break when it ends."}]}}
+{"version":"v0.9","updateDataModel":{"surfaceId":"plan","path":"/minutes","value":25}}
+```

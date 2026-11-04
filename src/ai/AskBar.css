@@ -1,0 +1,75 @@
+/* The Ask Zara bar in the calendar panel. Ink is the notch's text colour and
+   surfaces are tints of it, like the assistant panel: no accent hue. This file
+   loads with the notch, so it stays separate from the lazily loaded ai.css. */
+.ask-bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: none;
+	white-space: normal;
+}
+
+.ask-bar-field {
+	flex: 1;
+	min-width: 0;
+	height: 30px;
+	box-sizing: border-box;
+	padding: 0 14px;
+	border: 1px solid var(--zara-border);
+	border-radius: 999px;
+	outline: 0;
+	background: var(--zara-group-bg);
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 12.5px;
+	transition: border-color 0.15s ease;
+}
+
+.ask-bar-field::placeholder {
+	color: var(--zara-text-muted);
+}
+
+.ask-bar-field:focus-visible {
+	border-color: color-mix(in srgb, var(--zara-text) 38%, transparent);
+}
+
+.ask-bar-send {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid var(--zara-border);
+	border-radius: 50%;
+	background: transparent;
+	color: var(--zara-text);
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease,
+		transform 0.1s ease-out;
+}
+
+/* Something to send: the same filled circle as the assistant's send button. */
+.ask-bar-send:not(:disabled) {
+	border-color: transparent;
+	background: var(--zara-text);
+	color: var(--zara-bg-expanded, #000);
+}
+
+.ask-bar-send:not(:disabled):active {
+	transform: scale(0.94);
+}
+
+.ask-bar-send:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ask-bar-field,
+	.ask-bar-send {
+		transition: none;
+	}
+}

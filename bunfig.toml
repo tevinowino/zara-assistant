@@ -1,0 +1,4 @@
+[test]
+# `bun test` runs only the pure-TypeScript tests in scripts/. Component and
+# library tests under src/ run with Vitest (`bun run test:unit`).
+root = "./scripts"

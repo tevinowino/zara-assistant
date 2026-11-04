@@ -1,0 +1,2121 @@
+/*
+ * The assistant panel. It follows the notch's own look: black and white, with
+ * the user's text colour as the only ink. Every surface is a tint of
+ * --zara-text over the notch (the same way the notch's other panels do it), so light and
+ * dark themes both work. The one hue in the panel is --zai-blue, used sparingly
+ * for the things the user acts on or has said: the send button, their own
+ * messages, the focused input, links and the current chat. The user's accent
+ * colour is left to Settings, as it is everywhere in the notch.
+ */
+
+.zai-panel {
+	/* The panel's blue, fixed so it does not follow the user's accent colour. */
+	--zai-blue: #0a84ff;
+	/* The blue as text: pulled toward the notch's ink so it reads on a light notch too. */
+	--zai-blue-ink: color-mix(in srgb, var(--zai-blue) 72%, var(--zara-text));
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	flex: 1 1 auto;
+	width: 100%;
+	min-height: 0;
+	/* The bottom padding is a strip of empty glass under the input: the background
+	   is nearly transparent there, so nothing that must be read goes in it. */
+	padding: 10px 14px 22px;
+	box-sizing: border-box;
+	color: var(--zara-text);
+	caret-color: var(--zai-blue);
+	font-size: 12px;
+	line-height: 1.45;
+	text-align: left;
+	/* The notch sets nowrap on its container; prose must wrap inside the panel. */
+	white-space: normal;
+}
+
+.zai-panel ::selection {
+	background: color-mix(in srgb, var(--zai-blue) 38%, transparent);
+}
+
+.zai-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: none;
+}
+
+.zai-title {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
+.zai-spacer {
+	flex: 1;
+}
+
+.zai-icon-button {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--zara-text-muted);
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		transform 0.1s ease-out;
+}
+
+/* Feedback starts on press, not on release. */
+.zai-icon-button:active,
+.zai-send:active:not(:disabled) {
+	transform: scale(0.94);
+}
+
+.zai-icon-button:hover,
+.zai-icon-button:focus-visible {
+	background: var(--zara-group-bg);
+	color: var(--zara-text);
+	outline: none;
+}
+
+/* ---- conversation ---- */
+
+.zai-messages {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding-right: 4px;
+	/* Text dissolves just above the input instead of sitting on the faded notch
+	   background; the padding lets the last line scroll up clear of the fade. */
+	padding-bottom: var(--zai-dissolve, 40px);
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		#000 calc(100% - var(--zai-dissolve, 40px)),
+		transparent
+	);
+	mask-image: linear-gradient(to bottom, #000 calc(100% - var(--zai-dissolve, 40px)), transparent);
+	/* Never set scrollbar-width or scrollbar-color here: Chromium would then ignore
+	   the themed ::-webkit-scrollbar rules below and draw native arrow buttons. */
+}
+
+.zai-messages,
+.zai-table-scroll,
+.zai-data-table-scroll,
+.zai-carousel {
+	overflow-x: auto;
+}
+
+.zai-messages {
+	overflow-x: hidden;
+}
+
+.zai-messages::-webkit-scrollbar,
+.zai-table-scroll::-webkit-scrollbar,
+.zai-data-table-scroll::-webkit-scrollbar,
+.zai-carousel::-webkit-scrollbar {
+	width: 5px;
+	height: 5px;
+}
+
+.zai-messages::-webkit-scrollbar-track,
+.zai-table-scroll::-webkit-scrollbar-track,
+.zai-data-table-scroll::-webkit-scrollbar-track,
+.zai-carousel::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+/* Drawn from the theme's text colour so it reads in light and dark themes. */
+.zai-messages::-webkit-scrollbar-thumb,
+.zai-table-scroll::-webkit-scrollbar-thumb,
+.zai-data-table-scroll::-webkit-scrollbar-thumb,
+.zai-carousel::-webkit-scrollbar-thumb {
+	background: color-mix(in srgb, var(--zara-text, white) 28%, transparent);
+	border-radius: 3px;
+}
+
+.zai-messages::-webkit-scrollbar-thumb:hover,
+.zai-table-scroll::-webkit-scrollbar-thumb:hover,
+.zai-data-table-scroll::-webkit-scrollbar-thumb:hover,
+.zai-carousel::-webkit-scrollbar-thumb:hover {
+	background: color-mix(in srgb, var(--zara-text, white) 50%, transparent);
+}
+
+.zai-messages::-webkit-scrollbar-button,
+.zai-table-scroll::-webkit-scrollbar-button,
+.zai-data-table-scroll::-webkit-scrollbar-button,
+.zai-carousel::-webkit-scrollbar-button,
+.zai-messages::-webkit-scrollbar-corner,
+.zai-table-scroll::-webkit-scrollbar-corner,
+.zai-data-table-scroll::-webkit-scrollbar-corner {
+	display: none;
+}
+
+.zai-hint {
+	margin: auto;
+	color: var(--zara-text-muted);
+	font-size: 12px;
+	text-align: center;
+}
+
+.zai-user {
+	align-self: flex-end;
+	max-width: 85%;
+	padding: 6px 10px;
+	border: 1px solid color-mix(in srgb, var(--zai-blue) 38%, transparent);
+	border-radius: 14px 14px 4px 14px;
+	background: color-mix(in srgb, var(--zai-blue) 22%, transparent);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.zai-assistant {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	width: 100%;
+	min-width: 0;
+}
+
+.zai-bubble {
+	max-width: 92%;
+	padding: 7px 11px;
+	border: 1px solid var(--zara-border);
+	border-radius: 14px;
+	background: var(--zara-group-bg);
+	overflow-wrap: anywhere;
+}
+
+.zai-bubble-first {
+	border-top-left-radius: 4px;
+}
+
+.zai-block-row {
+	width: 100%;
+	min-width: 0;
+	overflow: hidden;
+}
+
+/* The small orb after an answer that is still being written. */
+.zai-writing {
+	display: flex;
+	align-items: center;
+	align-self: flex-start;
+	height: 20px;
+	margin-top: -2px;
+}
+
+.zai-error,
+.zai-notice {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 6px 10px;
+	border: 1px solid var(--zara-border);
+	border-radius: 10px;
+	font-size: 11px;
+}
+
+/* An error is the same black-and-white card with a stronger edge and full-strength
+   text; it needs no hue to be noticed. */
+.zai-error {
+	background: color-mix(in srgb, var(--zara-text) 8%, transparent);
+	border-color: color-mix(in srgb, var(--zara-text) 32%, transparent);
+	margin: 0;
+}
+
+.zai-notice {
+	background: var(--zara-group-bg);
+	color: var(--zara-text-muted);
+}
+
+.zai-error button,
+.zai-notice button {
+	flex: none;
+	padding: 2px 8px;
+	border: 1px solid var(--zara-border);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 11px;
+	cursor: pointer;
+}
+
+.zai-error button:hover,
+.zai-notice button:hover,
+.zai-error button:focus-visible,
+.zai-notice button:focus-visible {
+	background: var(--zara-group-bg);
+	outline: none;
+}
+
+.zai-jump {
+	position: absolute;
+	right: 22px;
+	bottom: 64px;
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px 9px;
+	border: 1px solid var(--zara-border);
+	border-radius: 999px;
+	background: var(--zara-bg-expanded, rgba(0, 0, 0, 0.85));
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 11px;
+	cursor: pointer;
+}
+
+/* ---- input ---- */
+
+.zai-compose {
+	display: flex;
+	align-items: flex-end;
+	gap: 6px;
+	flex: none;
+	padding: 6px 7px 6px 14px;
+	border: 1px solid var(--zara-border);
+	border-radius: 18px;
+	/* A solid pill (the notch colour at full strength, tinted like other
+	   surfaces), because the notch behind it fades to transparent at the bottom
+	   and typing must stay legible over any wallpaper. */
+	background:
+		linear-gradient(var(--zara-group-bg), var(--zara-group-bg)),
+		rgb(from var(--zara-bg-expanded, #000) r g b / 1);
+	transition: border-color 0.15s ease;
+}
+
+.zai-compose:focus-within {
+	border-color: color-mix(in srgb, var(--zai-blue) 70%, transparent);
+}
+
+.zai-compose textarea,
+.zai-compose input {
+	flex: 1;
+	min-width: 0;
+	max-height: 72px;
+	padding: 4px 0;
+	border: 0;
+	outline: 0;
+	resize: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 12.5px;
+}
+
+.zai-compose textarea::placeholder,
+.zai-compose input::placeholder {
+	color: var(--zara-text-muted);
+}
+
+.zai-send {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: var(--zai-blue);
+	color: #fff;
+	cursor: pointer;
+	transition:
+		opacity 0.15s ease,
+		transform 0.1s ease-out;
+}
+
+.zai-send:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+/* ---- API key card ---- */
+
+.zai-card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	flex: 1;
+	min-height: 0;
+	justify-content: center;
+}
+
+.zai-card-title {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.zai-card-text {
+	margin: 0;
+	color: var(--zara-text-muted);
+	font-size: 11px;
+}
+
+/* ---- markdown ---- */
+
+.zai-md > :first-child {
+	margin-top: 0;
+}
+
+.zai-md > :last-child {
+	margin-bottom: 0;
+}
+
+.zai-md p,
+.zai-md ul,
+.zai-md ol,
+.zai-md blockquote {
+	margin: 0.5em 0;
+}
+
+.zai-md ul,
+.zai-md ol {
+	padding-left: 1.3em;
+}
+
+.zai-md h1,
+.zai-md h2,
+.zai-md h3 {
+	margin: 0.7em 0 0.3em;
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.zai-md blockquote {
+	padding-left: 10px;
+	border-left: 2px solid var(--zara-border);
+	color: var(--zara-text-muted);
+}
+
+.zai-md hr {
+	border: 0;
+	border-top: 1px solid var(--zara-border);
+}
+
+.zai-md table {
+	border-collapse: collapse;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+
+.zai-md th,
+.zai-md td {
+	padding: 3px 8px;
+	border-bottom: 1px solid var(--zara-border);
+	text-align: left;
+}
+
+.zai-table-scroll {
+	width: 100%;
+	min-width: 0;
+	overflow-x: auto;
+}
+
+.zai-inline-code {
+	padding: 0 4px;
+	border: 1px solid var(--zara-border);
+	border-radius: 5px;
+	background: color-mix(in srgb, var(--zara-text) 8%, transparent);
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+	font-size: 10.5px;
+}
+
+.zai-link {
+	color: var(--zara-text);
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, var(--zara-text) 45%, transparent);
+	text-underline-offset: 2px;
+	cursor: pointer;
+}
+
+.zai-code {
+	margin: 6px 0;
+	padding: 10px;
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--zara-text) 8%, transparent);
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+	font-size: 11px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.zai-code-compact {
+	margin: 4px 0 0;
+	padding: 8px;
+	font-size: 10px;
+}
+
+/* ---- generative blocks ---- */
+
+.zai-block {
+	box-sizing: border-box;
+	min-width: 0;
+	border: 1px solid var(--zara-border);
+	border-radius: 12px;
+	background: var(--zara-group-bg);
+}
+
+.zai-eyebrow {
+	color: var(--zara-text-muted);
+	font-size: 9px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.zai-truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.zai-shimmer {
+	display: flex;
+	align-items: center;
+	padding: 8px 12px;
+	animation: zai-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes zai-pulse {
+	50% {
+		opacity: 0.55;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zai-shimmer {
+		animation: none;
+	}
+}
+
+.zai-fallback {
+	padding: 8px 12px;
+}
+
+.zai-fallback-title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.zai-fallback-detail {
+	margin: 4px 0 0;
+	color: var(--zara-text-muted);
+	font-size: 10px;
+}
+
+.zai-fallback summary {
+	margin-top: 6px;
+	color: var(--zara-text-muted);
+	font-size: 9.5px;
+	cursor: pointer;
+}
+
+.zai-stat-grid {
+	display: grid;
+	gap: 8px;
+	width: 100%;
+}
+
+.zai-stat {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+	padding: 8px 12px;
+}
+
+.zai-stat-value {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.zai-stat-delta {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	font-size: 10px;
+	font-weight: 500;
+}
+
+/* Direction is carried by the arrow; a change in hue would break the black and white. */
+.zai-trend-up,
+.zai-trend-down {
+	color: var(--zara-text);
+}
+
+.zai-trend-flat {
+	color: var(--zara-text-muted);
+}
+
+.zai-carousel {
+	display: flex;
+	gap: 8px;
+	width: 100%;
+	min-width: 0;
+	overflow-x: auto;
+	overflow-y: hidden;
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x proximity;
+	padding-bottom: 4px;
+}
+
+.zai-carousel-card {
+	display: flex;
+	flex: none;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+	width: 45%;
+	min-width: 140px;
+	padding: 10px 12px;
+	scroll-snap-align: start;
+}
+
+.zai-carousel-title {
+	font-size: 11.5px;
+	font-weight: 600;
+}
+
+.zai-carousel-text {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	color: var(--zara-text-muted);
+	font-size: 10px;
+	line-height: 1.35;
+}
+
+.zai-data-table {
+	overflow: hidden;
+}
+
+.zai-data-table-scroll {
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+
+.zai-data-table table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+}
+
+.zai-data-table th {
+	position: sticky;
+	top: 0;
+	padding: 0;
+	background: var(--zara-bg-expanded, rgba(0, 0, 0, 0.9));
+	border-bottom: 1px solid var(--zara-border);
+	text-align: left;
+}
+
+.zai-data-table th button {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	width: 100%;
+	padding: 6px 10px;
+	border: 0;
+	background: transparent;
+	color: var(--zara-text-muted);
+	font: inherit;
+	font-size: 9px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+.zai-data-table th button:hover,
+.zai-data-table th button:focus-visible {
+	color: var(--zara-text);
+	outline: none;
+}
+
+.zai-data-table td {
+	padding: 6px 10px;
+	border-bottom: 1px solid var(--zara-border);
+}
+
+.zai-chart {
+	padding: 8px 8px 4px;
+	overflow: hidden;
+}
+
+.zai-chart-title {
+	padding: 0 4px;
+	margin-bottom: 4px;
+}
+
+.zai-diagram {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 10px 12px;
+	/* A tall diagram scrolls inside its card rather than stretching the answer. */
+	overflow: auto;
+	background:
+		radial-gradient(
+			ellipse at 50% 0%,
+			color-mix(in srgb, #3b82f6 10%, transparent),
+			transparent 70%
+		),
+		var(--zara-group-bg);
+}
+
+/* The notch's container for the assistant: fills the open notch below its top edge. */
+.ai-view {
+	display: flex;
+	flex-direction: column;
+	/* Grow to the height the notch gives the panel, so the input rests on the
+	   bottom edge even while the conversation is still short. */
+	flex: 1 1 auto;
+	align-self: stretch;
+	width: 100%;
+	min-height: 0;
+	overflow: hidden;
+	border-radius: 0 0 28px 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zai-icon-button,
+	.zai-send {
+		transition: none;
+	}
+
+	.zai-icon-button:active,
+	.zai-send:active:not(:disabled) {
+		transform: none;
+	}
+}
+
+/* ---- A2UI surfaces (src/ai/a2ui) ---- */
+
+.zai-surface {
+	min-width: 0;
+	white-space: normal;
+}
+
+.zai-s-node {
+	min-width: 0;
+}
+
+.zai-s-column {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.zai-s-column[data-align="start"] {
+	align-items: flex-start;
+}
+
+.zai-s-column[data-align="center"] {
+	align-items: center;
+}
+
+.zai-s-column[data-align="end"] {
+	align-items: flex-end;
+}
+
+.zai-s-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.zai-s-row[data-align="start"] {
+	align-items: flex-start;
+}
+
+.zai-s-row[data-align="center"] {
+	align-items: center;
+}
+
+.zai-s-row[data-align="end"] {
+	align-items: flex-end;
+}
+
+.zai-s-row[data-align="stretch"] {
+	align-items: stretch;
+}
+
+.zai-s-card {
+	padding: 10px 12px;
+}
+
+.zai-s-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.zai-s-list > .zai-s-node + .zai-s-node {
+	margin-top: 6px;
+	padding-top: 6px;
+	border-top: 1px solid var(--zara-border);
+}
+
+.zai-s-text {
+	margin: 0;
+	font-size: 12.5px;
+	line-height: 1.45;
+	overflow-wrap: anywhere;
+}
+
+.zai-s-text-h2 {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.zai-s-text-caption {
+	color: var(--zara-text-muted);
+	font-size: 11px;
+}
+
+.zai-s-divider {
+	margin: 0;
+	border: 0;
+	border-top: 1px solid var(--zara-border);
+}
+
+.zai-s-icon {
+	flex: none;
+	color: var(--zara-text-muted);
+}
+
+/* Surface controls: tints of the notch's ink, like .zai-compose and .zai-send. */
+
+.zai-s-button-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.zai-s-button {
+	padding: 6px 12px;
+	border: 1px solid var(--zara-border);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		transform 0.1s ease-out;
+}
+
+.zai-s-button-primary {
+	border-color: transparent;
+	background: var(--zara-text);
+	color: var(--zara-bg-expanded, #000);
+}
+
+.zai-s-button-borderless {
+	border-color: transparent;
+	text-decoration: underline;
+}
+
+.zai-s-button:active:not(:disabled) {
+	transform: scale(0.96);
+}
+
+.zai-s-button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.zai-s-button-result {
+	color: var(--zara-text-muted);
+	font-size: 11px;
+}
+
+.zai-s-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.zai-s-field-label {
+	color: var(--zara-text-muted);
+	font-size: 11px;
+}
+
+.zai-s-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 6px 10px;
+	border: 1px solid var(--zara-border);
+	border-radius: 10px;
+	outline: 0;
+	background: var(--zara-group-bg);
+	color: inherit;
+	font: inherit;
+	font-size: 12.5px;
+	resize: none;
+}
+
+.zai-s-input:focus-visible {
+	border-color: color-mix(in srgb, var(--zara-text) 38%, transparent);
+}
+
+.zai-s-check {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12.5px;
+}
+
+.zai-s-choices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.zai-s-choice {
+	padding: 4px 10px;
+	border: 1px solid var(--zara-border);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.zai-s-choice[aria-pressed="true"] {
+	border-color: transparent;
+	background: var(--zara-text);
+	color: var(--zara-bg-expanded, #000);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zai-s-button {
+		transition: none;
+	}
+}
+
+/* "Continuing: <title>" beside the panel title after a conversation is picked up. */
+.zai-resumed {
+	min-width: 0;
+	overflow: hidden;
+	color: var(--zara-text-muted);
+	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ---- welcome view, past chats and chat rows ---- */
+
+@keyframes zai-view-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+}
+
+.zai-welcome,
+.zai-history {
+	animation: zai-view-in 0.18s ease-out;
+}
+
+.zai-resumed::before {
+	content: "\00b7";
+	margin-right: 6px;
+}
+
+.zai-welcome {
+	display: flex;
+	/* Takes the room that is left, but never less than its own content, so the
+	   message area scrolls instead of squeezing it. */
+	flex: 1 0 auto;
+	flex-direction: column;
+	/* "safe" keeps the top edge reachable: plain centring would push the title
+	   above the scrollable area when the content is taller than the space. */
+	justify-content: safe center;
+	gap: 14px;
+	padding: 4px 2px;
+}
+
+.zai-welcome-title {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+}
+
+.zai-suggestions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.zai-suggestion,
+.zai-pill-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 5px 11px;
+	border: 1px solid var(--zara-border);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		transform 0.1s ease-out;
+}
+
+.zai-suggestion:hover:not(:disabled),
+.zai-suggestion:focus-visible,
+.zai-pill-button:hover,
+.zai-pill-button:focus-visible {
+	border-color: color-mix(in srgb, var(--zai-blue) 55%, transparent);
+	background: color-mix(in srgb, var(--zai-blue) 14%, transparent);
+	outline: none;
+}
+
+.zai-suggestion:active:not(:disabled),
+.zai-pill-button:active {
+	transform: scale(0.96);
+}
+
+.zai-suggestion:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.zai-recent {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.zai-recent-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.zai-eyebrow {
+	margin: 0;
+}
+
+.zai-link-button {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--zara-text-muted);
+	font: inherit;
+	font-size: 11px;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	cursor: pointer;
+}
+
+.zai-link-button:hover,
+.zai-link-button:focus-visible {
+	color: var(--zai-blue-ink);
+	outline: none;
+}
+
+.zai-chat-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.zai-chat-row {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	border-radius: 9px;
+}
+
+.zai-chat-row:hover,
+.zai-chat-row:focus-within {
+	background: var(--zara-group-bg);
+}
+
+.zai-chat-open {
+	display: flex;
+	flex: 1;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 0;
+	border-radius: 9px;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 12.5px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.zai-chat-open:focus-visible {
+	outline: 1px solid color-mix(in srgb, var(--zai-blue) 70%, transparent);
+}
+
+.zai-chat-open:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.zai-chat-open[aria-current="true"] .zai-chat-title {
+	color: var(--zai-blue-ink);
+	font-weight: 600;
+}
+
+.zai-chat-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.zai-chat-time {
+	flex: none;
+	color: var(--zara-text-muted);
+	font-size: 11px;
+}
+
+.zai-chat-delete {
+	display: grid;
+	flex: none;
+	place-items: center;
+	min-width: 24px;
+	height: 24px;
+	padding: 0 6px;
+	border: 0;
+	border-radius: 7px;
+	background: transparent;
+	color: var(--zara-text-muted);
+	font: inherit;
+	font-size: 11px;
+	opacity: 0;
+	cursor: pointer;
+	transition: opacity 0.12s ease;
+}
+
+.zai-chat-row:hover .zai-chat-delete,
+.zai-chat-row:focus-within .zai-chat-delete {
+	opacity: 1;
+}
+
+.zai-chat-delete:hover,
+.zai-chat-delete:focus-visible {
+	color: var(--zara-text);
+	outline: none;
+}
+
+.zai-chat-delete-armed {
+	opacity: 1;
+	border: 1px solid var(--zara-border);
+	color: var(--zara-text);
+}
+
+.zai-history {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 8px;
+	min-height: 0;
+}
+
+.zai-history-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	flex: none;
+}
+
+.zai-history-title {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.zai-history-body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 10px;
+	min-height: 0;
+	overflow-y: auto;
+	padding-right: 4px;
+	padding-bottom: var(--zai-dissolve, 40px);
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		#000 calc(100% - var(--zai-dissolve, 40px)),
+		transparent
+	);
+	mask-image: linear-gradient(to bottom, #000 calc(100% - var(--zai-dissolve, 40px)), transparent);
+}
+
+.zai-history-group {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.zai-history-note {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: auto;
+	color: var(--zara-text-muted);
+	font-size: 12px;
+}
+
+/* Same thin themed scrollbar as the conversation, with no arrow buttons. */
+.zai-history-body::-webkit-scrollbar {
+	width: 5px;
+}
+
+.zai-history-body::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.zai-history-body::-webkit-scrollbar-thumb {
+	background: color-mix(in srgb, var(--zara-text, white) 28%, transparent);
+	border-radius: 3px;
+}
+
+.zai-history-body::-webkit-scrollbar-button,
+.zai-history-body::-webkit-scrollbar-corner {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zai-welcome,
+	.zai-history {
+		animation: none;
+	}
+
+	.zai-suggestion,
+	.zai-pill-button,
+	.zai-chat-delete {
+		transition: none;
+	}
+}
+
+/* A soft halo in the notch colour behind text in the lists, so a line that ends
+   up over a bright wallpaper where the background is thin still reads. It is
+   invisible on a dark wallpaper, where the halo is the same colour as the
+   background. */
+.zai-messages,
+.zai-history-body,
+.zai-welcome {
+	text-shadow: 0 0 6px rgb(from var(--zara-bg-expanded, #000) r g b / 0.9);
+}
+
+/* ---- coloured components (see a2ui/A2uiVisuals.tsx) ----
+   Each one sets --zai-accent from the palette in protocol/accent.ts. Colour goes
+   on edges, dots, fills and small tints; text keeps the notch's own colour so any
+   hue stays readable on both themes. */
+
+.zai-s-text-accent,
+.zai-s-icon-accent {
+	color: var(--zai-accent);
+}
+
+.zai-s-card-accent {
+	border-color: color-mix(in srgb, var(--zai-accent) 45%, transparent);
+	background: color-mix(in srgb, var(--zai-accent) 12%, var(--zara-group-bg));
+}
+
+.zai-s-caption {
+	color: var(--zara-text-muted);
+	font-size: 11px;
+	line-height: 1.35;
+}
+
+.zai-s-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.zai-s-badge {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-start;
+	padding: 2px 9px;
+	border: 1px solid color-mix(in srgb, var(--zai-accent, var(--zara-text)) 45%, transparent);
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--zai-accent, var(--zara-text)) 16%, transparent);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.zai-s-callout {
+	display: flex;
+	align-items: flex-start;
+	gap: 9px;
+	padding: 9px 12px;
+	border: 1px solid color-mix(in srgb, var(--zai-accent) 35%, transparent);
+	border-left: 3px solid var(--zai-accent);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--zai-accent) 12%, transparent);
+}
+
+.zai-s-callout-icon {
+	flex: none;
+	margin-top: 1px;
+	color: var(--zai-accent);
+}
+
+.zai-s-callout-body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.zai-s-callout-title {
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.zai-s-callout-text {
+	font-size: 12px;
+	line-height: 1.45;
+	overflow-wrap: anywhere;
+}
+
+.zai-s-progress {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.zai-s-progress-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	font-size: 12px;
+}
+
+.zai-s-progress-label {
+	font-weight: 500;
+}
+
+.zai-s-progress-value {
+	margin-left: auto;
+	color: var(--zara-text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.zai-s-progress-track {
+	height: 7px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--zara-text) 12%, transparent);
+}
+
+.zai-s-progress-fill {
+	height: 100%;
+	border-radius: inherit;
+	background: linear-gradient(
+		90deg,
+		color-mix(in srgb, var(--zai-accent, var(--zara-text)) 70%, transparent),
+		var(--zai-accent, var(--zara-text))
+	);
+	transition: width 0.4s ease-out;
+}
+
+.zai-s-ring {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+}
+
+.zai-s-ring-dial {
+	position: relative;
+	width: 72px;
+	height: 72px;
+}
+
+.zai-s-ring-dial svg {
+	width: 100%;
+	height: 100%;
+	transform: rotate(-90deg);
+}
+
+.zai-s-ring-track,
+.zai-s-ring-fill {
+	fill: none;
+	stroke-width: 6;
+}
+
+.zai-s-ring-track {
+	stroke: color-mix(in srgb, var(--zara-text) 12%, transparent);
+}
+
+.zai-s-ring-fill {
+	stroke: var(--zai-accent, var(--zara-text));
+	stroke-linecap: round;
+	transition: stroke-dashoffset 0.5s ease-out;
+}
+
+.zai-s-ring-value {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	font-size: 13px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.zai-s-ring-label {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.zai-s-keyvalue {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+}
+
+.zai-s-keyvalue-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 14px;
+	padding: 5px 0;
+	border-bottom: 1px solid var(--zara-border);
+	font-size: 12px;
+}
+
+.zai-s-keyvalue-row:last-child {
+	border-bottom: 0;
+}
+
+.zai-s-keyvalue dt {
+	color: var(--zara-text-muted);
+}
+
+.zai-s-keyvalue dd {
+	margin: 0;
+	font-weight: 500;
+	text-align: right;
+	overflow-wrap: anywhere;
+}
+
+.zai-s-keyvalue dd[data-accent="true"] {
+	color: var(--zai-accent);
+}
+
+.zai-s-timeline {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.zai-s-timeline::before {
+	content: "";
+	position: absolute;
+	top: 6px;
+	bottom: 6px;
+	left: 4px;
+	width: 2px;
+	border-radius: 1px;
+	background: var(--zara-border);
+}
+
+.zai-s-timeline-item {
+	position: relative;
+	display: flex;
+	gap: 12px;
+}
+
+.zai-s-timeline-dot {
+	position: relative;
+	flex: none;
+	width: 10px;
+	height: 10px;
+	margin-top: 3px;
+	border: 2px solid var(--zai-accent, var(--zara-text-muted));
+	border-radius: 50%;
+	background: var(--zara-bg-expanded, #000);
+}
+
+.zai-s-timeline-body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.zai-s-timeline-head {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.zai-s-timeline-title {
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.zai-s-timeline-time {
+	color: var(--zai-accent, var(--zara-text-muted));
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+
+.zai-s-checklist {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.zai-s-checklist-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 12.5px;
+	line-height: 1.4;
+}
+
+.zai-s-checklist-item svg {
+	flex: none;
+	margin-top: 2px;
+}
+
+.zai-s-check-done {
+	color: #22c55e;
+}
+
+.zai-s-check-todo {
+	color: var(--zara-text-muted);
+}
+
+.zai-s-checklist-item[data-done="true"] > span:first-of-type {
+	color: var(--zara-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zai-s-progress-fill,
+	.zai-s-ring-fill {
+		transition: none;
+	}
+}
+
+/* Direction of a stat is the one place a green and a red carry meaning. */
+.zai-trend-up {
+	color: #22c55e;
+}
+
+.zai-trend-down {
+	color: #ef4444;
+}
+
+/* ---- Thinking section (ThinkingSection.tsx) ---- */
+
+.zai-thinking {
+	align-self: flex-start;
+	max-width: 100%;
+	min-width: 0;
+}
+
+.zai-thinking-head {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	max-width: 100%;
+	padding: 3px 8px 3px 4px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--zara-text-muted);
+	font: inherit;
+	font-size: 11.5px;
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease,
+		transform 0.1s ease-out;
+}
+
+.zai-thinking-head:hover,
+.zai-thinking-head:focus-visible {
+	background: var(--zara-group-bg);
+	color: var(--zara-text);
+	outline: none;
+}
+
+.zai-thinking-head:focus-visible {
+	outline: 1px solid color-mix(in srgb, var(--zai-blue) 70%, transparent);
+}
+
+/* Feedback starts on press, not on release. */
+.zai-thinking-head:active {
+	transform: scale(0.97);
+}
+
+.zai-thinking-mark {
+	flex: none;
+	margin-left: 3px;
+}
+
+.zai-thinking-label {
+	flex: none;
+	font-weight: 500;
+}
+
+/* While it works, the thinking line is a little brighter than the finished one. */
+.zai-thinking[data-state="thinking"] .zai-thinking-head {
+	color: var(--zara-text);
+}
+
+.zai-thinking-now {
+	min-width: 0;
+	overflow: hidden;
+	color: var(--zara-text-muted);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.zai-thinking-now::before {
+	content: "\00b7";
+	margin-right: 7px;
+}
+
+.zai-thinking-arrow {
+	flex: none;
+	transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.zai-thinking-head[aria-expanded="true"] .zai-thinking-arrow {
+	transform: rotate(90deg);
+}
+
+.zai-thinking-body {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 4px 0 2px 11px;
+	padding-left: 14px;
+	border-left: 1px solid var(--zara-border);
+	animation: zai-thinking-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes zai-thinking-in {
+	from {
+		opacity: 0;
+		transform: translateY(-3px);
+	}
+}
+
+/* The stages, one under another, each joined to the next by a thin line. */
+.zai-steps {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.zai-step {
+	position: relative;
+	display: grid;
+	grid-template-columns: 16px minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 9px;
+	padding-bottom: 9px;
+}
+
+.zai-step:last-child {
+	padding-bottom: 0;
+}
+
+.zai-step:not(:last-child)::before {
+	content: "";
+	position: absolute;
+	top: 18px;
+	bottom: 2px;
+	left: 7.5px;
+	width: 1px;
+	background: var(--zara-border);
+}
+
+.zai-step-node {
+	display: grid;
+	place-items: center;
+	width: 16px;
+	height: 16px;
+	border: 1px solid color-mix(in srgb, var(--step-color) 45%, transparent);
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--step-color) 14%, transparent);
+	color: var(--step-color);
+}
+
+.zai-step[data-state="active"] .zai-step-node {
+	border-color: color-mix(in srgb, var(--step-color) 70%, transparent);
+}
+
+.zai-step-pulse {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentcolor;
+	animation: zai-step-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes zai-step-pulse {
+	50% {
+		opacity: 0.35;
+		transform: scale(0.7);
+	}
+}
+
+.zai-step-text {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+}
+
+.zai-step-label {
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.35;
+}
+
+.zai-step[data-state="done"] .zai-step-label {
+	color: var(--zara-text-muted);
+}
+
+.zai-step-detail {
+	color: var(--zara-text-muted);
+	font-size: 11px;
+	line-height: 1.4;
+}
+
+.zai-step-time {
+	padding-top: 1px;
+	color: var(--zara-text-muted);
+	font-size: 10.5px;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* What the model wrote while reasoning, set as titled thoughts. */
+.zai-thoughts {
+	display: flex;
+	flex-direction: column;
+	gap: 9px;
+	max-height: 168px;
+	padding-right: 6px;
+	overflow-y: auto;
+	user-select: text;
+}
+
+.zai-thoughts::-webkit-scrollbar {
+	width: 5px;
+}
+
+.zai-thoughts::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.zai-thoughts::-webkit-scrollbar-thumb {
+	background: color-mix(in srgb, var(--zara-text) 28%, transparent);
+	border-radius: 3px;
+}
+
+.zai-thoughts::-webkit-scrollbar-button {
+	display: none;
+}
+
+.zai-thought {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.zai-thought-title {
+	font-size: 11.5px;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.zai-thought-text,
+.zai-thought-list {
+	margin: 0;
+	color: var(--zara-text-muted);
+	font-size: 11.5px;
+	line-height: 1.5;
+}
+
+.zai-thought-list {
+	padding-left: 16px;
+}
+
+.zai-thought-text strong,
+.zai-thought-list strong {
+	color: var(--zara-text);
+	font-weight: 600;
+}
+
+.zai-thought-text code,
+.zai-thought-list code {
+	padding: 0 4px;
+	border-radius: 4px;
+	background: var(--zara-group-bg);
+	color: var(--zara-text);
+	font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+	font-size: 10.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zai-thinking-head,
+	.zai-thinking-arrow {
+		transition: none;
+	}
+
+	.zai-thinking-body {
+		animation: none;
+	}
+
+	.zai-step-pulse {
+		animation: none;
+	}
+}
+
+/* ---- model and thinking chips in the composer (ModelChooser.tsx) ---- */
+
+/* The chat composer has its text above and its controls below, like a message box. */
+.zai-compose-chat {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 2px;
+	padding: 8px 7px 6px 14px;
+}
+
+.zai-compose-bar {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 2px;
+}
+
+.zai-chip-wrap {
+	position: relative;
+	min-width: 0;
+}
+
+.zai-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 210px;
+	padding: 4px 8px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--zara-text-muted);
+	font: inherit;
+	font-size: 11.5px;
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		transform 0.1s ease-out;
+}
+
+.zai-chip:hover,
+.zai-chip:focus-visible,
+.zai-chip[aria-expanded="true"] {
+	background: var(--zara-group-bg);
+	color: var(--zara-text);
+	outline: none;
+}
+
+.zai-chip:focus-visible {
+	outline: 1px solid color-mix(in srgb, var(--zai-blue) 70%, transparent);
+}
+
+/* Feedback starts on press, not on release. */
+.zai-chip:active {
+	transform: scale(0.97);
+}
+
+.zai-chip-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.zai-chip-quiet {
+	opacity: 0.65;
+}
+
+.zai-chip-bolt {
+	flex: none;
+	color: #ff9f0a;
+}
+
+/* Opens upward: the composer is at the bottom of the panel. Solid, so nothing shows through. */
+.zai-chip-menu {
+	position: absolute;
+	z-index: 30;
+	right: 0;
+	bottom: calc(100% + 6px);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid var(--zara-border);
+	border-radius: 14px;
+	background: rgb(from var(--zara-bg-expanded, #1a1a1a) r g b / 1);
+	animation: zai-chip-in 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+	transform-origin: bottom right;
+}
+
+@keyframes zai-chip-in {
+	from {
+		opacity: 0;
+		transform: translateY(3px) scale(0.98);
+	}
+}
+
+.zai-chip-search {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 8px;
+	margin: 6px 6px 2px;
+	padding: 6px 10px;
+	border: 1px solid var(--zara-border);
+	border-radius: 10px;
+	color: var(--zara-text-muted);
+}
+
+.zai-chip-search input {
+	flex: 1;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 12px;
+}
+
+.zai-chip-search input::placeholder {
+	color: var(--zara-text-muted);
+}
+
+.zai-chip-list {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+	padding: 4px;
+	overflow-y: auto;
+}
+
+.zai-chip-list::-webkit-scrollbar {
+	width: 5px;
+}
+
+.zai-chip-list::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.zai-chip-list::-webkit-scrollbar-thumb {
+	background: color-mix(in srgb, var(--zara-text) 28%, transparent);
+	border-radius: 3px;
+}
+
+.zai-chip-list::-webkit-scrollbar-button {
+	display: none;
+}
+
+.zai-chip-title {
+	margin: 0;
+	padding: 5px 8px 3px;
+	color: var(--zara-text-muted);
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.zai-chip-group-head {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	width: 100%;
+	padding: 7px 8px;
+	border: 0;
+	border-radius: 9px;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 12px;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+}
+
+.zai-chip-group-head:hover,
+.zai-chip-group-head:focus-visible {
+	background: var(--zara-group-bg);
+	outline: none;
+}
+
+.zai-chip-group-name {
+	flex: none;
+}
+
+.zai-chip-count {
+	flex: 1;
+	color: var(--zara-text-muted);
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+}
+
+.zai-chip-fold {
+	flex: none;
+	color: var(--zara-text-muted);
+	transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.zai-chip-group-head[aria-expanded="true"] .zai-chip-fold {
+	transform: rotate(90deg);
+}
+
+.zai-chip-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 6px 8px 6px 31px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--zara-text);
+	font: inherit;
+	font-size: 11.5px;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background 0.12s ease,
+		transform 0.1s ease-out;
+}
+
+/* Lists with no service logo to line up with. */
+.zai-chip-title ~ .zai-chip-item {
+	padding-left: 8px;
+}
+
+.zai-chip-item:hover,
+.zai-chip-item:focus-visible {
+	background: var(--zara-group-bg);
+	outline: none;
+}
+
+.zai-chip-item:active {
+	transform: scale(0.98);
+}
+
+.zai-chip-item-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.zai-chip-item-text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.zai-chip-item-sub {
+	color: var(--zara-text-muted);
+	font-size: 10.5px;
+}
+
+.zai-chip-fast {
+	margin-top: 3px;
+	border-top: 1px solid var(--zara-border);
+	border-radius: 0 0 8px 8px;
+	padding-top: 8px;
+}
+
+.zai-chip-note {
+	margin: 0;
+	padding: 5px 8px 3px;
+	color: var(--zara-text-muted);
+	font-size: 10.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.zai-chip,
+	.zai-chip-item,
+	.zai-chip-fold {
+		transition: none;
+	}
+
+	.zai-chip-menu {
+		animation: none;
+	}
+}
+
+/* How long a long wait has gone on, so it can be told from one that is stuck. */
+.zai-thinking-elapsed {
+	flex: none;
+	color: var(--zara-text-muted);
+	font-size: 10.5px;
+	font-variant-numeric: tabular-nums;
+}

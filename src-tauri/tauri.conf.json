@@ -1,0 +1,121 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Zara",
+  "version": "0.1.0",
+  "identifier": "com.zara.app",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Zara",
+        "width": 1920,
+        "height": 640,
+        "x": 0,
+        "y": 0,
+        "decorations": false,
+        "transparent": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
+        "focus": false,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": false,
+        "dragDropEnabled": true
+      },
+      {
+        "label": "settings",
+        "create": false,
+        "title": "Settings",
+        "url": "settings.html",
+        "width": 740,
+        "height": 560,
+        "decorations": false,
+        "transparent": true,
+        "resizable": true,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false,
+        "alwaysOnTop": false,
+        "visibleOnAllWorkspaces": false,
+        "focus": true,
+        "skipTaskbar": false,
+        "shadow": true,
+        "visible": false,
+        "center": true
+      },
+      {
+        "label": "overlay",
+        "title": "Overlay",
+        "url": "overlay.html",
+        "width": 1920,
+        "height": 1080,
+        "x": 0,
+        "y": 0,
+        "decorations": false,
+        "transparent": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
+        "focus": false,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ipc: http://ipc.localhost https://api.open-meteo.com https://geocoding-api.open-meteo.com https://ipapi.co http://ip-api.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "Tevin Owino",
+    "copyright": "Copyright © 2026 Tevin Owino",
+    "category": "Utility",
+    "shortDescription": "An AI assistant that lives in your Windows notch",
+    "longDescription": "Zara adds a notch to the top of your screen with an AI assistant, media controls, quick settings and status.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false
+      }
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDUxNDVCMDI3QzQ1MDVGRDQKUldUVVgxREVKN0JGVVZRWGxoMTN3L0pvUDVRVm1yTHNiYU9GKzRwQjlWVDUwQU5KNWhYbG9NUlMK",
+      "endpoints": [
+        "https://github.com/tevinowino/zara-assistant/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

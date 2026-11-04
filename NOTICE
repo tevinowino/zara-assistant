@@ -1,0 +1,13 @@
+Zara
+Copyright (C) 2026 Tevin Owino
+
+Zara is free software licensed under the GNU General Public License, version 3
+only (see LICENSE).
+
+The Syne font is included under the SIL Open Font License; see
+src/assets/fonts/Syne-OFL.txt.
+
+The AI provider marks in src/assets/providers are from @lobehub/icons-static-svg
+(MIT License, https://github.com/lobehub/lobe-icons). The marks themselves are
+trademarks of OpenAI, Anthropic, Google, NVIDIA, Groq, Mistral AI, xAI, DeepSeek,
+Ollama and OpenRouter, and are used only to identify those services.

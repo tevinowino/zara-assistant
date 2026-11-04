@@ -1,0 +1,39 @@
+### stat
+A row of up to 4 labeled metric cards, each with an optional trend delta.
+USE WHEN: Highlighting 2-4 standalone key numbers side by side (e.g. revenue, active users, conversion rate) that the user should compare at a glance.
+DO NOT USE WHEN: Never for a single number — write it directly in the sentence instead. Never for a series of values over time (use chart) or a full record with many fields (use table).
+```zara:stat
+{"items":[{"label":"Revenue","value":"$482K","delta":"+12%","trend":"up"},{"label":"Churn","value":"2.1%","delta":"-0.4%","trend":"down"}]}
+```
+
+### chart
+A line, bar, area, or pie chart with up to 4 series over up to 30 points. Optionally set a "colors" array (hex, one entry per series) to use a custom palette instead of the default.
+USE WHEN: 3 or more numeric data points over an ordered dimension (time, category) where a visual trend or comparison adds clarity beyond the numbers themselves.
+DO NOT USE WHEN: Never for a single number — write it in the sentence, or use stat for 2-4 standalone numbers. Never for fewer than 3 points or for a qualitative/text comparison.
+```zara:chart
+{"kind":"line","title":"Revenue","data":[{"x":"Jul","revenue":12},{"x":"Aug","revenue":19},{"x":"Sep","revenue":24}],"series":["revenue"]}
+```
+
+### table
+A sortable table with up to 4 columns and up to 12 rows.
+USE WHEN: Structured multi-field records (3 or more rows) the user should scan or compare — pricing tiers, spec sheets, search results.
+DO NOT USE WHEN: Never for 1-2 items — write them in prose. Never for a single-column list — use a markdown bullet list instead.
+```zara:table
+{"columns":["Model","Price","Speed"],"rows":[["A","$10","Fast"],["B","$8","Medium"]]}
+```
+
+### carousel
+A horizontally-scrollable set of 2-6 titled cards, browsed one at a time. Each item may optionally set its own hex "color" for a distinct accent.
+USE WHEN: 3-6 distinct options, recommendations, or next steps the user should browse — product picks, plan tiers, suggested actions.
+DO NOT USE WHEN: Never for fewer than 3 items — use prose or stat. Never for structured data with several fields per item — use table.
+```zara:carousel
+{"items":[{"title":"Starter","description":"Good for small teams"},{"title":"Pro","description":"Unlimited projects"},{"title":"Enterprise","description":"Dedicated support"}]}
+```
+
+### mermaid
+A Mermaid diagram (flowchart, sequence diagram, or entity relationship diagram).
+USE WHEN: Explaining a process, architecture, sequence of interactions, or relationships between a handful of entities where the structure itself is the point.
+DO NOT USE WHEN: Never for numeric/data comparisons — use chart, table, or stat instead. Never for a simple linear list — use a markdown numbered list. Keep diagrams to a handful of nodes; this renders at a fixed ~200px height.
+```zara:mermaid
+{"source":"flowchart TD\nA[Request] --> B{Cache hit?}\nB -->|yes| C[Return cached]\nB -->|no| D[Fetch + store]"}
+```

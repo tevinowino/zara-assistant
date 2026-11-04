@@ -1,0 +1,294 @@
+/* Background of a surface attached to a screen edge (see EdgeSurface.tsx):
+   the pill plus the two concave flares that bridge it to that edge.
+
+   The pieces are painted opaque and overlapping, then the whole layer is faded
+   to the theme colour's alpha by a single mask, so no light seam or darker
+   overlap can show where they meet.
+
+   The browser rounds box backgrounds to whole device pixels but not clip
+   paths, so at fractional scales a background's edge can sit up to half a
+   pixel off a curve that should meet it. Every piece therefore paints 1px
+   beyond its box and is clipped back to its exact shape, which puts all the
+   visible edges on the same unrounded geometry. */
+/* Where, down the surface, it starts to fade to transparent and where it is
+   fully transparent. Both at 100% means it does not fade. A surface sets these
+   (the notch does, on the assistant) to dissolve into whatever is behind the
+   screen edge it hangs from. Registered so the fade eases in and out with the
+   panel instead of snapping. */
+@property --surface-fade-start {
+	syntax: "<percentage>";
+	inherits: true;
+	initial-value: 100%;
+}
+
+@property --surface-fade-end {
+	syntax: "<percentage>";
+	inherits: true;
+	initial-value: 100%;
+}
+
+.edge-surface {
+	--surface-solid: rgb(from var(--surface-bg) r g b / 1);
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	border-radius: inherit;
+	pointer-events: none;
+	/* Two masks multiplied: the theme colour's alpha, and a fade to transparent
+	   over the last stretch of the surface (see --surface-fade-start and -end). */
+	-webkit-mask-image:
+		linear-gradient(var(--surface-bg), var(--surface-bg)),
+		linear-gradient(to bottom, #000 var(--surface-fade-start), transparent var(--surface-fade-end));
+	mask-image:
+		linear-gradient(var(--surface-bg), var(--surface-bg)),
+		linear-gradient(to bottom, #000 var(--surface-fade-start), transparent var(--surface-fade-end));
+	-webkit-mask-composite: source-in;
+	mask-composite: intersect;
+}
+
+/* Reach over the flares, along the edge. */
+.edge-surface--top,
+.edge-surface--bottom {
+	left: -13px;
+	right: -13px;
+}
+
+.edge-surface--left,
+.edge-surface--right {
+	top: -13px;
+	bottom: -13px;
+}
+
+/* The pill, with the parent's (possibly animated) corner radii. */
+.edge-surface::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background: var(--surface-solid);
+	box-shadow: 0 0 0 1px var(--surface-solid);
+	/* The border box including its corner radii. */
+	clip-path: border-box;
+}
+
+.edge-surface--top::before,
+.edge-surface--bottom::before {
+	left: 13px;
+	right: 13px;
+}
+
+.edge-surface--left::before,
+.edge-surface--right::before {
+	top: 13px;
+	bottom: 13px;
+}
+
+/* Each flare is a 13px concave curve plus 1px that overlaps the pill. The
+   curve is a cubic whose handles reach past a circle's (10px instead of
+   7.2px), so it eases into the screen edge and the pill's side instead of
+   meeting them with a crease. One shape per axis, mirrored per corner. */
+.edge-surface-flare {
+	position: absolute;
+	background: var(--surface-solid);
+	box-shadow: 0 0 0 1px var(--surface-solid);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.edge-surface.show-flares .edge-surface-flare {
+	opacity: 1;
+}
+
+/* Drawn as the top edge's left flare. */
+.edge-surface--top .edge-surface-flare,
+.edge-surface--bottom .edge-surface-flare {
+	width: 14px;
+	height: 13px;
+	clip-path: shape(
+		from 0 0,
+		curve to 13px 13px with 10px 0 / 13px 3px,
+		line to 14px 13px,
+		line to 14px 0,
+		close
+	);
+}
+
+/* Drawn as the left edge's top flare. */
+.edge-surface--left .edge-surface-flare,
+.edge-surface--right .edge-surface-flare {
+	width: 13px;
+	height: 14px;
+	clip-path: shape(
+		from 0 0,
+		curve to 13px 13px with 0 10px / 3px 13px,
+		line to 13px 14px,
+		line to 0 14px,
+		close
+	);
+}
+
+.edge-surface--top .edge-surface-flare {
+	top: 0;
+}
+
+.edge-surface--bottom .edge-surface-flare {
+	bottom: 0;
+}
+
+.edge-surface--left .edge-surface-flare {
+	left: 0;
+}
+
+.edge-surface--right .edge-surface-flare {
+	right: 0;
+}
+
+.edge-surface--top .edge-surface-flare--start,
+.edge-surface--bottom .edge-surface-flare--start {
+	left: 0;
+}
+
+.edge-surface--top .edge-surface-flare--end,
+.edge-surface--bottom .edge-surface-flare--end {
+	right: 0;
+}
+
+.edge-surface--left .edge-surface-flare--start,
+.edge-surface--right .edge-surface-flare--start {
+	top: 0;
+}
+
+.edge-surface--left .edge-surface-flare--end,
+.edge-surface--right .edge-surface-flare--end {
+	bottom: 0;
+}
+
+.edge-surface--top .edge-surface-flare--end,
+.edge-surface--right .edge-surface-flare--start {
+	transform: scaleX(-1);
+}
+
+.edge-surface--bottom .edge-surface-flare--start,
+.edge-surface--left .edge-surface-flare--end {
+	transform: scaleY(-1);
+}
+
+.edge-surface--bottom .edge-surface-flare--end,
+.edge-surface--right .edge-surface-flare--end {
+	transform: scale(-1, -1);
+}
+
+/* Liquid Glass (see glassSettings.ts): a lit rim and a sheen over the pill. Hidden
+   unless the page has data-glass="on". It paints above the surface layer (a later
+   sibling at the same z-index) and uses the pill's own, possibly animated, corner radii.
+   The same fade-to-transparent as the surface keeps a fading assistant panel from
+   leaving a bright rim at its bottom. */
+.edge-surface-glass {
+	display: none;
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	border-radius: inherit;
+	pointer-events: none;
+	/* Frost: a milky haze through the glass. */
+	background-color: rgb(255 255 255 / calc(var(--glass-frost, 0.2) * 0.16));
+	/* Dispersion: light splits into a cool fringe at the lit edge and a warm one at the
+	   far edge. Depth: the glass darkens toward the bottom and glows faintly along its
+	   inside edges, which reads as thickness. */
+	box-shadow:
+		inset 1px 1px 0 rgb(120 170 255 / calc(var(--glass-dispersion, 0.3) * 0.55)),
+		inset -1px -1px 0 rgb(255 140 110 / calc(var(--glass-dispersion, 0.3) * 0.55)),
+		inset 0 -14px 20px -12px rgb(0 0 0 / calc(var(--glass-depth, 0.4) * 0.4)),
+		inset 0 0 18px rgb(255 255 255 / calc(var(--glass-depth, 0.4) * 0.07));
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		#000 var(--surface-fade-start),
+		transparent var(--surface-fade-end)
+	);
+	mask-image: linear-gradient(
+		to bottom,
+		#000 var(--surface-fade-start),
+		transparent var(--surface-fade-end)
+	);
+}
+
+:root[data-glass="on"] .edge-surface-glass {
+	display: block;
+}
+
+/* The rim: a gradient ring, brightest where light would catch the top-left and
+   bottom-right of the glass. The ring shape comes from masking the padding box out of
+   the border box. */
+.edge-surface-glass::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	padding: var(--glass-edge-width, 1.5px);
+	background: linear-gradient(
+		160deg,
+		rgb(255 255 255 / calc(var(--glass-shine, 0.6) * 0.9)),
+		rgb(255 255 255 / calc(var(--glass-shine, 0.6) * 0.18)) 30%,
+		rgb(255 255 255 / calc(var(--glass-shine, 0.6) * 0.06)) 65%,
+		rgb(255 255 255 / calc(var(--glass-shine, 0.6) * 0.55))
+	);
+	-webkit-mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(#000 0 0) content-box exclude,
+		linear-gradient(#000 0 0);
+}
+
+/* The sheen: light washing down from the top, and a faint glow gathering at the
+   bottom edge. */
+.edge-surface-glass::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	background:
+		linear-gradient(
+			to bottom,
+			rgb(255 255 255 / calc(var(--glass-sheen, 0.5) * 0.22)),
+			rgb(255 255 255 / calc(var(--glass-sheen, 0.5) * 0.05)) 40%,
+			transparent 70%
+		),
+		linear-gradient(to top, rgb(255 255 255 / calc(var(--glass-sheen, 0.5) * 0.1)), transparent 30%);
+}
+
+/* Accent glow (see glowSettings.ts): a halo of colour around the surface. Behind
+   everything else (z-index -2); a box-shadow is never drawn inside its own box, so it
+   cannot tint the surface. It reaches --glow-reach, which the window region leaves room
+   for. Hidden for the assistant panel, which fades out at its bottom: a halo would
+   outline the fade. */
+.edge-surface-glow {
+	display: none;
+	position: absolute;
+	inset: 0;
+	z-index: -2;
+	border-radius: inherit;
+	pointer-events: none;
+	box-shadow:
+		0 0 var(--glow-reach, 20px)
+			color-mix(
+				in srgb,
+				var(--glow-color, #007aff) calc(var(--glow-intensity, 0.5) * 70%),
+				transparent
+			),
+		0 0 calc(var(--glow-reach, 20px) / 4)
+			color-mix(
+				in srgb,
+				var(--glow-color, #007aff) calc(var(--glow-intensity, 0.5) * 45%),
+				transparent
+			);
+}
+
+:root[data-glow="on"] .edge-surface-glow {
+	display: block;
+}
+
+:root[data-glow="on"] .fade-bottom > .edge-surface-glow {
+	display: none;
+}

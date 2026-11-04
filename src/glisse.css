@@ -1,0 +1,8 @@
+/*
+ * Tunes the Glisse (Liquid Glass) components to Zara's theme. Glisse styles use
+ * zero-specificity :where() selectors, so plain :root declarations here win.
+ * Light/dark itself comes from the data-theme attribute that applyTheme sets.
+ */
+:root {
+	--lg-fill: var(--zara-accent, #007aff);
+}

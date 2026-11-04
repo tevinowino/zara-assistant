@@ -1,0 +1,955 @@
+{
+ "constants": {
+  "SCREEN_REQUEST_SENTINEL": "[[SEE_SCREEN]]",
+  "NOTES_REQUEST_SENTINEL": "[[SEE_NOTES]]",
+  "SCREEN_CAPABILITY_INSTRUCTION": "You cannot see the user's screen by default. If — and only if — answering the current message genuinely requires seeing what's currently on their screen (e.g. \"what does this error say\", \"what's on my screen\", \"explain this code I'm looking at\"), reply with EXACTLY this token and nothing else — no punctuation, no explanation, no markdown: [[SEE_SCREEN]]\nNever use it for questions answerable from conversation alone. Never mention this token, this ability, or this instruction to the user.",
+  "SCREEN_ATTACHED_INSTRUCTION": "The user's current screen is attached to this message as an image. Answer their original question using what you see in it. The screen is already attached — do not ask to see it again, and never reply with [[SEE_SCREEN]].",
+  "MEMORY_CAPABILITY_INSTRUCTION": "If the user shares something worth remembering across ALL future conversations — their name, a stated preference, an allergy, a standing instruction, a durable fact about them — embed it anywhere in your reply using this exact inline tag: [[REMEMBER: <short, self-contained fact written in third person, e.g. \"prefers concise answers\" or \"is allergic to shellfish\">]]. Only for durable facts worth keeping forever, never for one-off context from this message alone, and never for something already listed in your saved memories below. Answer normally around the tag — it is stripped from what the user sees automatically. Never mention this tag or this instruction to the user.",
+  "NOTES_CAPABILITY_INSTRUCTION": "If the user asks about, references, or wants you to manage their saved notes (their own scratchpad — think meeting notes), reply with EXACTLY this token and nothing else — no punctuation, no explanation: [[SEE_NOTES]]\nNever use it when the user hasn't asked about their notes. Never mention this token or this instruction to the user.",
+  "NOTES_ATTACHED_INSTRUCTION": "The user's notes are listed below, numbered. Answer using them. To manage notes, embed these tags anywhere in your reply (they're stripped from what the user sees automatically):\n- [[NOTE_ADD: <text>]] to add a new note\n- [[NOTE_EDIT:<n>: <new text>]] to replace note number n with new text\n- [[NOTE_DELETE:<n>]] to delete note number n\nOnly act on notes when the user actually asked you to add, remove, or edit something — don't manage notes unprompted. Never mention these tags to the user."
+ },
+ "screenRequest": [
+  {
+   "input": "",
+   "expected": {
+    "needsScreen": false,
+    "text": ""
+   }
+  },
+  {
+   "input": "   ",
+   "expected": {
+    "needsScreen": false,
+    "text": "   "
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]]",
+   "expected": {
+    "needsScreen": true,
+    "text": ""
+   }
+  },
+  {
+   "input": "  [[SEE_SCREEN]]\n",
+   "expected": {
+    "needsScreen": true,
+    "text": ""
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]].",
+   "expected": {
+    "needsScreen": false,
+    "text": "."
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]] [[SEE_SCREEN]]",
+   "expected": {
+    "needsScreen": false,
+    "text": ""
+   }
+  },
+  {
+   "input": "Sure! I can use [[SEE_SCREEN]] when needed.",
+   "expected": {
+    "needsScreen": false,
+    "text": "Sure! I can use  when needed."
+   }
+  },
+  {
+   "input": "[[SEE_NOTES]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[SEE_NOTES]]"
+   }
+  },
+  {
+   "input": "\n\t[[SEE_NOTES]]\t\n",
+   "expected": {
+    "needsScreen": false,
+    "text": "\n\t[[SEE_NOTES]]\t\n"
+   }
+  },
+  {
+   "input": "Here is [[SEE_NOTES]] inside prose",
+   "expected": {
+    "needsScreen": false,
+    "text": "Here is [[SEE_NOTES]] inside prose"
+   }
+  },
+  {
+   "input": "plain answer with no tags",
+   "expected": {
+    "needsScreen": false,
+    "text": "plain answer with no tags"
+   }
+  },
+  {
+   "input": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done",
+   "expected": {
+    "needsScreen": false,
+    "text": "unicode: café 日本語 🎉  done"
+   }
+  },
+  {
+   "input": "[[REMEMBER: likes tea]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[REMEMBER: likes tea]]"
+   }
+  },
+  {
+   "input": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?",
+   "expected": {
+    "needsScreen": false,
+    "text": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?"
+   }
+  },
+  {
+   "input": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]"
+   }
+  },
+  {
+   "input": "[[REMEMBER: nested [brackets] fail]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[REMEMBER: nested [brackets] fail]]"
+   }
+  },
+  {
+   "input": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n"
+   }
+  },
+  {
+   "input": "[[NOTE_ADD: buy milk]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[NOTE_ADD: buy milk]]"
+   }
+  },
+  {
+   "input": "Done [[NOTE_ADD:  call mum  ]] ok",
+   "expected": {
+    "needsScreen": false,
+    "text": "Done [[NOTE_ADD:  call mum  ]] ok"
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]"
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]"
+   }
+  },
+  {
+   "input": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]"
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]",
+   "expected": {
+    "needsScreen": false,
+    "text": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]"
+   }
+  },
+  {
+   "input": "mix [[REMEMBER: r]] [[NOTE_ADD: n]] [[SEE_SCREEN]] end",
+   "expected": {
+    "needsScreen": false,
+    "text": "mix [[REMEMBER: r]] [[NOTE_ADD: n]]  end"
+   }
+  }
+ ],
+ "screenAnswer": [
+  {
+   "input": "",
+   "expected": {
+    "text": "I looked at your screen but couldn't put together a clear answer — could you try asking again?",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "   ",
+   "expected": {
+    "text": "I looked at your screen but couldn't put together a clear answer — could you try asking again?",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]]",
+   "expected": {
+    "text": "I looked at your screen but couldn't put together a clear answer — could you try asking again?",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "  [[SEE_SCREEN]]\n",
+   "expected": {
+    "text": "I looked at your screen but couldn't put together a clear answer — could you try asking again?",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]].",
+   "expected": {
+    "text": ".",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]] [[SEE_SCREEN]]",
+   "expected": {
+    "text": "I looked at your screen but couldn't put together a clear answer — could you try asking again?",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "Sure! I can use [[SEE_SCREEN]] when needed.",
+   "expected": {
+    "text": "Sure! I can use  when needed.",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[SEE_NOTES]]",
+   "expected": {
+    "text": "[[SEE_NOTES]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "\n\t[[SEE_NOTES]]\t\n",
+   "expected": {
+    "text": "\n\t[[SEE_NOTES]]\t\n",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "Here is [[SEE_NOTES]] inside prose",
+   "expected": {
+    "text": "Here is [[SEE_NOTES]] inside prose",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "plain answer with no tags",
+   "expected": {
+    "text": "plain answer with no tags",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done",
+   "expected": {
+    "text": "unicode: café 日本語 🎉  done",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[REMEMBER: likes tea]]",
+   "expected": {
+    "text": "[[REMEMBER: likes tea]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?",
+   "expected": {
+    "text": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]",
+   "expected": {
+    "text": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[REMEMBER: nested [brackets] fail]]",
+   "expected": {
+    "text": "[[REMEMBER: nested [brackets] fail]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n",
+   "expected": {
+    "text": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[NOTE_ADD: buy milk]]",
+   "expected": {
+    "text": "[[NOTE_ADD: buy milk]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "Done [[NOTE_ADD:  call mum  ]] ok",
+   "expected": {
+    "text": "Done [[NOTE_ADD:  call mum  ]] ok",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]",
+   "expected": {
+    "text": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]",
+   "expected": {
+    "text": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]",
+   "expected": {
+    "text": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]",
+   "expected": {
+    "text": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]",
+    "usedScreen": true
+   }
+  },
+  {
+   "input": "mix [[REMEMBER: r]] [[NOTE_ADD: n]] [[SEE_SCREEN]] end",
+   "expected": {
+    "text": "mix [[REMEMBER: r]] [[NOTE_ADD: n]]  end",
+    "usedScreen": true
+   }
+  }
+ ],
+ "memory": [
+  {
+   "input": "",
+   "expected": {
+    "text": "",
+    "memories": []
+   }
+  },
+  {
+   "input": "   ",
+   "expected": {
+    "text": "",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]]",
+   "expected": {
+    "text": "[[SEE_SCREEN]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "  [[SEE_SCREEN]]\n",
+   "expected": {
+    "text": "[[SEE_SCREEN]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]].",
+   "expected": {
+    "text": "[[SEE_SCREEN]].",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]] [[SEE_SCREEN]]",
+   "expected": {
+    "text": "[[SEE_SCREEN]] [[SEE_SCREEN]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "Sure! I can use [[SEE_SCREEN]] when needed.",
+   "expected": {
+    "text": "Sure! I can use [[SEE_SCREEN]] when needed.",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[SEE_NOTES]]",
+   "expected": {
+    "text": "[[SEE_NOTES]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "\n\t[[SEE_NOTES]]\t\n",
+   "expected": {
+    "text": "[[SEE_NOTES]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "Here is [[SEE_NOTES]] inside prose",
+   "expected": {
+    "text": "Here is [[SEE_NOTES]] inside prose",
+    "memories": []
+   }
+  },
+  {
+   "input": "plain answer with no tags",
+   "expected": {
+    "text": "plain answer with no tags",
+    "memories": []
+   }
+  },
+  {
+   "input": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done",
+   "expected": {
+    "text": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[REMEMBER: likes tea]]",
+   "expected": {
+    "text": "",
+    "memories": [
+     "likes tea"
+    ]
+   }
+  },
+  {
+   "input": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?",
+   "expected": {
+    "text": "Noted.  Anything else?",
+    "memories": [
+     "is allergic to shellfish"
+    ]
+   }
+  },
+  {
+   "input": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]",
+   "expected": {
+    "text": "and  and",
+    "memories": [
+     "a",
+     "b"
+    ]
+   }
+  },
+  {
+   "input": "[[REMEMBER: nested [brackets] fail]]",
+   "expected": {
+    "text": "[[REMEMBER: nested [brackets] fail]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n",
+   "expected": {
+    "text": "",
+    "memories": [
+     "first",
+     "second"
+    ]
+   }
+  },
+  {
+   "input": "[[NOTE_ADD: buy milk]]",
+   "expected": {
+    "text": "[[NOTE_ADD: buy milk]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "Done [[NOTE_ADD:  call mum  ]] ok",
+   "expected": {
+    "text": "Done [[NOTE_ADD:  call mum  ]] ok",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]",
+   "expected": {
+    "text": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]",
+   "expected": {
+    "text": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]",
+   "expected": {
+    "text": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]",
+   "expected": {
+    "text": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]",
+    "memories": []
+   }
+  },
+  {
+   "input": "mix [[REMEMBER: r]] [[NOTE_ADD: n]] [[SEE_SCREEN]] end",
+   "expected": {
+    "text": "mix  [[NOTE_ADD: n]] [[SEE_SCREEN]] end",
+    "memories": [
+     "r"
+    ]
+   }
+  }
+ ],
+ "notesRequest": [
+  {
+   "input": "",
+   "expected": {
+    "needsNotes": false,
+    "text": ""
+   }
+  },
+  {
+   "input": "   ",
+   "expected": {
+    "needsNotes": false,
+    "text": "   "
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[SEE_SCREEN]]"
+   }
+  },
+  {
+   "input": "  [[SEE_SCREEN]]\n",
+   "expected": {
+    "needsNotes": false,
+    "text": "  [[SEE_SCREEN]]\n"
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]].",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[SEE_SCREEN]]."
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]] [[SEE_SCREEN]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[SEE_SCREEN]] [[SEE_SCREEN]]"
+   }
+  },
+  {
+   "input": "Sure! I can use [[SEE_SCREEN]] when needed.",
+   "expected": {
+    "needsNotes": false,
+    "text": "Sure! I can use [[SEE_SCREEN]] when needed."
+   }
+  },
+  {
+   "input": "[[SEE_NOTES]]",
+   "expected": {
+    "needsNotes": true,
+    "text": ""
+   }
+  },
+  {
+   "input": "\n\t[[SEE_NOTES]]\t\n",
+   "expected": {
+    "needsNotes": true,
+    "text": ""
+   }
+  },
+  {
+   "input": "Here is [[SEE_NOTES]] inside prose",
+   "expected": {
+    "needsNotes": false,
+    "text": "Here is  inside prose"
+   }
+  },
+  {
+   "input": "plain answer with no tags",
+   "expected": {
+    "needsNotes": false,
+    "text": "plain answer with no tags"
+   }
+  },
+  {
+   "input": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done",
+   "expected": {
+    "needsNotes": false,
+    "text": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done"
+   }
+  },
+  {
+   "input": "[[REMEMBER: likes tea]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[REMEMBER: likes tea]]"
+   }
+  },
+  {
+   "input": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?",
+   "expected": {
+    "needsNotes": false,
+    "text": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?"
+   }
+  },
+  {
+   "input": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]"
+   }
+  },
+  {
+   "input": "[[REMEMBER: nested [brackets] fail]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[REMEMBER: nested [brackets] fail]]"
+   }
+  },
+  {
+   "input": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n"
+   }
+  },
+  {
+   "input": "[[NOTE_ADD: buy milk]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[NOTE_ADD: buy milk]]"
+   }
+  },
+  {
+   "input": "Done [[NOTE_ADD:  call mum  ]] ok",
+   "expected": {
+    "needsNotes": false,
+    "text": "Done [[NOTE_ADD:  call mum  ]] ok"
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]"
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]"
+   }
+  },
+  {
+   "input": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]"
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]",
+   "expected": {
+    "needsNotes": false,
+    "text": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]"
+   }
+  },
+  {
+   "input": "mix [[REMEMBER: r]] [[NOTE_ADD: n]] [[SEE_SCREEN]] end",
+   "expected": {
+    "needsNotes": false,
+    "text": "mix [[REMEMBER: r]] [[NOTE_ADD: n]] [[SEE_SCREEN]] end"
+   }
+  }
+ ],
+ "noteActions": [
+  {
+   "input": "",
+   "expected": {
+    "text": "",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "   ",
+   "expected": {
+    "text": "",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]]",
+   "expected": {
+    "text": "[[SEE_SCREEN]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "  [[SEE_SCREEN]]\n",
+   "expected": {
+    "text": "[[SEE_SCREEN]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]].",
+   "expected": {
+    "text": "[[SEE_SCREEN]].",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[SEE_SCREEN]] [[SEE_SCREEN]]",
+   "expected": {
+    "text": "[[SEE_SCREEN]] [[SEE_SCREEN]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "Sure! I can use [[SEE_SCREEN]] when needed.",
+   "expected": {
+    "text": "Sure! I can use [[SEE_SCREEN]] when needed.",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[SEE_NOTES]]",
+   "expected": {
+    "text": "[[SEE_NOTES]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "\n\t[[SEE_NOTES]]\t\n",
+   "expected": {
+    "text": "[[SEE_NOTES]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "Here is [[SEE_NOTES]] inside prose",
+   "expected": {
+    "text": "Here is [[SEE_NOTES]] inside prose",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "plain answer with no tags",
+   "expected": {
+    "text": "plain answer with no tags",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done",
+   "expected": {
+    "text": "unicode: café 日本語 🎉 [[SEE_SCREEN]] done",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[REMEMBER: likes tea]]",
+   "expected": {
+    "text": "[[REMEMBER: likes tea]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?",
+   "expected": {
+    "text": "Noted. [[REMEMBER:  is allergic to shellfish  ]] Anything else?",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]",
+   "expected": {
+    "text": "[[REMEMBER: a]] and [[REMEMBER: b]] and [[REMEMBER:   ]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[REMEMBER: nested [brackets] fail]]",
+   "expected": {
+    "text": "[[REMEMBER: nested [brackets] fail]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[REMEMBER: first]]\n[[REMEMBER: second]]\n",
+   "expected": {
+    "text": "[[REMEMBER: first]]\n[[REMEMBER: second]]",
+    "added": [],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[NOTE_ADD: buy milk]]",
+   "expected": {
+    "text": "",
+    "added": [
+     "buy milk"
+    ],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "Done [[NOTE_ADD:  call mum  ]] ok",
+   "expected": {
+    "text": "Done  ok",
+    "added": [
+     "call mum"
+    ],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2: new text]] and [[NOTE_DELETE:3]]",
+   "expected": {
+    "text": "and",
+    "added": [],
+    "edited": [
+     {
+      "position": 2,
+      "text": "new text"
+     }
+    ],
+    "deleted": [
+     3
+    ]
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:2:   ]] [[NOTE_DELETE:0]] [[NOTE_ADD:]]",
+   "expected": {
+    "text": "[[NOTE_ADD:]]",
+    "added": [],
+    "edited": [],
+    "deleted": [
+     0
+    ]
+   }
+  },
+  {
+   "input": "[[NOTE_DELETE:12]][[NOTE_DELETE:12]]",
+   "expected": {
+    "text": "",
+    "added": [],
+    "edited": [],
+    "deleted": [
+     12,
+     12
+    ]
+   }
+  },
+  {
+   "input": "[[NOTE_EDIT:x: bad position]] [[NOTE_ADD: ok]]",
+   "expected": {
+    "text": "[[NOTE_EDIT:x: bad position]]",
+    "added": [
+     "ok"
+    ],
+    "edited": [],
+    "deleted": []
+   }
+  },
+  {
+   "input": "mix [[REMEMBER: r]] [[NOTE_ADD: n]] [[SEE_SCREEN]] end",
+   "expected": {
+    "text": "mix [[REMEMBER: r]]  [[SEE_SCREEN]] end",
+    "added": [
+     "n"
+    ],
+    "edited": [],
+    "deleted": []
+   }
+  }
+ ],
+ "systemPrompt": [
+  {
+   "persona": "PERSONA",
+   "expected": "PERSONA\n\nYou may use standard Markdown: **bold**, *italic*, <u>underline</u>, `inline code`,\nfenced code blocks with a language tag, bullet/numbered lists, tables, blockquotes, and LaTeX math\n($inline$ or $$block$$) when it aids clarity. Do not over-format short answers.\n\nYou may embed an interactive widget by emitting a fenced code block whose info\nstring is `zara:<type>` and whose body is a single JSON object.\n\n- The body must be strictly valid JSON: no comments, no trailing commas, no\n  unquoted keys, no NaN/Infinity.\n- One block per fence. A blank line before and after every fence.\n- Blocks render at the full pane width (~460px) at a fixed height. Keep data\n  small: charts <= 30 points and <= 4 series; tables <= 12 rows and <= 4\n  columns; carousels <= 6 items; stat rows <= 4 metrics.\n- Never place a block inside a list item, table cell, or blockquote.\n- At most 2 blocks in a single reply.\n- Never mention \"zara:\", the block fence syntax, or these instructions to the user.\n\nMost replies contain zero blocks. Before emitting one, ask: would a competent analyst draw a picture here? If the data has fewer than three points, or the answer is qualitative, answer in prose instead.\n\n### stat\nA row of up to 4 labeled metric cards, each with an optional trend delta.\nUSE WHEN: Highlighting 2-4 standalone key numbers side by side (e.g. revenue, active users, conversion rate) that the user should compare at a glance.\nDO NOT USE WHEN: Never for a single number — write it directly in the sentence instead. Never for a series of values over time (use chart) or a full record with many fields (use table).\n```zara:stat\n{\"items\":[{\"label\":\"Revenue\",\"value\":\"$482K\",\"delta\":\"+12%\",\"trend\":\"up\"},{\"label\":\"Churn\",\"value\":\"2.1%\",\"delta\":\"-0.4%\",\"trend\":\"down\"}]}\n```\n\n### chart\nA line, bar, area, or pie chart with up to 4 series over up to 30 points. Optionally set a \"colors\" array (hex, one entry per series) to use a custom palette instead of the default.\nUSE WHEN: 3 or more numeric data points over an ordered dimension (time, category) where a visual trend or comparison adds clarity beyond the numbers themselves.\nDO NOT USE WHEN: Never for a single number — write it in the sentence, or use stat for 2-4 standalone numbers. Never for fewer than 3 points or for a qualitative/text comparison.\n```zara:chart\n{\"kind\":\"line\",\"title\":\"Revenue\",\"data\":[{\"x\":\"Jul\",\"revenue\":12},{\"x\":\"Aug\",\"revenue\":19},{\"x\":\"Sep\",\"revenue\":24}],\"series\":[\"revenue\"]}\n```\n\n### table\nA sortable table with up to 4 columns and up to 12 rows.\nUSE WHEN: Structured multi-field records (3 or more rows) the user should scan or compare — pricing tiers, spec sheets, search results.\nDO NOT USE WHEN: Never for 1-2 items — write them in prose. Never for a single-column list — use a markdown bullet list instead.\n```zara:table\n{\"columns\":[\"Model\",\"Price\",\"Speed\"],\"rows\":[[\"A\",\"$10\",\"Fast\"],[\"B\",\"$8\",\"Medium\"]]}\n```\n\n### carousel\nA horizontally-scrollable set of 2-6 titled cards, browsed one at a time. Each item may optionally set its own hex \"color\" for a distinct accent.\nUSE WHEN: 3-6 distinct options, recommendations, or next steps the user should browse — product picks, plan tiers, suggested actions.\nDO NOT USE WHEN: Never for fewer than 3 items — use prose or stat. Never for structured data with several fields per item — use table.\n```zara:carousel\n{\"items\":[{\"title\":\"Starter\",\"description\":\"Good for small teams\"},{\"title\":\"Pro\",\"description\":\"Unlimited projects\"},{\"title\":\"Enterprise\",\"description\":\"Dedicated support\"}]}\n```\n\n### mermaid\nA Mermaid diagram (flowchart, sequence diagram, or entity relationship diagram).\nUSE WHEN: Explaining a process, architecture, sequence of interactions, or relationships between a handful of entities where the structure itself is the point.\nDO NOT USE WHEN: Never for numeric/data comparisons — use chart, table, or stat instead. Never for a simple linear list — use a markdown numbered list. Keep diagrams to a handful of nodes; this renders at a fixed ~200px height.\n```zara:mermaid\n{\"source\":\"flowchart TD\\nA[Request] --> B{Cache hit?}\\nB -->|yes| C[Return cached]\\nB -->|no| D[Fetch + store]\"}\n```\n\nMost replies contain zero blocks. Before emitting one, ask: would a competent analyst draw a picture here? If the data has fewer than three points, or the answer is qualitative, answer in prose instead.\n\nExample — a comparison question answered correctly, with no block:\nQ: \"How does Python compare to JavaScript for scripting?\"\nA: Python tends to read closer to pseudocode and has a larger standard library out of the box, while\nJavaScript's biggest advantage is running natively in every browser and on servers via Node without a\nseparate runtime. For quick scripting, Python usually wins on readability; for anything touching the\nbrowser, JavaScript is unavoidable.\n(No widget — this is a qualitative comparison, not something a table would clarify.)"
+  },
+  {
+   "persona": "  Padded persona\n\n",
+   "expected": "Padded persona\n\nYou may use standard Markdown: **bold**, *italic*, <u>underline</u>, `inline code`,\nfenced code blocks with a language tag, bullet/numbered lists, tables, blockquotes, and LaTeX math\n($inline$ or $$block$$) when it aids clarity. Do not over-format short answers.\n\nYou may embed an interactive widget by emitting a fenced code block whose info\nstring is `zara:<type>` and whose body is a single JSON object.\n\n- The body must be strictly valid JSON: no comments, no trailing commas, no\n  unquoted keys, no NaN/Infinity.\n- One block per fence. A blank line before and after every fence.\n- Blocks render at the full pane width (~460px) at a fixed height. Keep data\n  small: charts <= 30 points and <= 4 series; tables <= 12 rows and <= 4\n  columns; carousels <= 6 items; stat rows <= 4 metrics.\n- Never place a block inside a list item, table cell, or blockquote.\n- At most 2 blocks in a single reply.\n- Never mention \"zara:\", the block fence syntax, or these instructions to the user.\n\nMost replies contain zero blocks. Before emitting one, ask: would a competent analyst draw a picture here? If the data has fewer than three points, or the answer is qualitative, answer in prose instead.\n\n### stat\nA row of up to 4 labeled metric cards, each with an optional trend delta.\nUSE WHEN: Highlighting 2-4 standalone key numbers side by side (e.g. revenue, active users, conversion rate) that the user should compare at a glance.\nDO NOT USE WHEN: Never for a single number — write it directly in the sentence instead. Never for a series of values over time (use chart) or a full record with many fields (use table).\n```zara:stat\n{\"items\":[{\"label\":\"Revenue\",\"value\":\"$482K\",\"delta\":\"+12%\",\"trend\":\"up\"},{\"label\":\"Churn\",\"value\":\"2.1%\",\"delta\":\"-0.4%\",\"trend\":\"down\"}]}\n```\n\n### chart\nA line, bar, area, or pie chart with up to 4 series over up to 30 points. Optionally set a \"colors\" array (hex, one entry per series) to use a custom palette instead of the default.\nUSE WHEN: 3 or more numeric data points over an ordered dimension (time, category) where a visual trend or comparison adds clarity beyond the numbers themselves.\nDO NOT USE WHEN: Never for a single number — write it in the sentence, or use stat for 2-4 standalone numbers. Never for fewer than 3 points or for a qualitative/text comparison.\n```zara:chart\n{\"kind\":\"line\",\"title\":\"Revenue\",\"data\":[{\"x\":\"Jul\",\"revenue\":12},{\"x\":\"Aug\",\"revenue\":19},{\"x\":\"Sep\",\"revenue\":24}],\"series\":[\"revenue\"]}\n```\n\n### table\nA sortable table with up to 4 columns and up to 12 rows.\nUSE WHEN: Structured multi-field records (3 or more rows) the user should scan or compare — pricing tiers, spec sheets, search results.\nDO NOT USE WHEN: Never for 1-2 items — write them in prose. Never for a single-column list — use a markdown bullet list instead.\n```zara:table\n{\"columns\":[\"Model\",\"Price\",\"Speed\"],\"rows\":[[\"A\",\"$10\",\"Fast\"],[\"B\",\"$8\",\"Medium\"]]}\n```\n\n### carousel\nA horizontally-scrollable set of 2-6 titled cards, browsed one at a time. Each item may optionally set its own hex \"color\" for a distinct accent.\nUSE WHEN: 3-6 distinct options, recommendations, or next steps the user should browse — product picks, plan tiers, suggested actions.\nDO NOT USE WHEN: Never for fewer than 3 items — use prose or stat. Never for structured data with several fields per item — use table.\n```zara:carousel\n{\"items\":[{\"title\":\"Starter\",\"description\":\"Good for small teams\"},{\"title\":\"Pro\",\"description\":\"Unlimited projects\"},{\"title\":\"Enterprise\",\"description\":\"Dedicated support\"}]}\n```\n\n### mermaid\nA Mermaid diagram (flowchart, sequence diagram, or entity relationship diagram).\nUSE WHEN: Explaining a process, architecture, sequence of interactions, or relationships between a handful of entities where the structure itself is the point.\nDO NOT USE WHEN: Never for numeric/data comparisons — use chart, table, or stat instead. Never for a simple linear list — use a markdown numbered list. Keep diagrams to a handful of nodes; this renders at a fixed ~200px height.\n```zara:mermaid\n{\"source\":\"flowchart TD\\nA[Request] --> B{Cache hit?}\\nB -->|yes| C[Return cached]\\nB -->|no| D[Fetch + store]\"}\n```\n\nMost replies contain zero blocks. Before emitting one, ask: would a competent analyst draw a picture here? If the data has fewer than three points, or the answer is qualitative, answer in prose instead.\n\nExample — a comparison question answered correctly, with no block:\nQ: \"How does Python compare to JavaScript for scripting?\"\nA: Python tends to read closer to pseudocode and has a larger standard library out of the box, while\nJavaScript's biggest advantage is running natively in every browser and on servers via Node without a\nseparate runtime. For quick scripting, Python usually wins on readability; for anything touching the\nbrowser, JavaScript is unavoidable.\n(No widget — this is a qualitative comparison, not something a table would clarify.)"
+  },
+  {
+   "persona": "Zara persona\n\nwith memory\n\nand notes",
+   "expected": "Zara persona\n\nwith memory\n\nand notes\n\nYou may use standard Markdown: **bold**, *italic*, <u>underline</u>, `inline code`,\nfenced code blocks with a language tag, bullet/numbered lists, tables, blockquotes, and LaTeX math\n($inline$ or $$block$$) when it aids clarity. Do not over-format short answers.\n\nYou may embed an interactive widget by emitting a fenced code block whose info\nstring is `zara:<type>` and whose body is a single JSON object.\n\n- The body must be strictly valid JSON: no comments, no trailing commas, no\n  unquoted keys, no NaN/Infinity.\n- One block per fence. A blank line before and after every fence.\n- Blocks render at the full pane width (~460px) at a fixed height. Keep data\n  small: charts <= 30 points and <= 4 series; tables <= 12 rows and <= 4\n  columns; carousels <= 6 items; stat rows <= 4 metrics.\n- Never place a block inside a list item, table cell, or blockquote.\n- At most 2 blocks in a single reply.\n- Never mention \"zara:\", the block fence syntax, or these instructions to the user.\n\nMost replies contain zero blocks. Before emitting one, ask: would a competent analyst draw a picture here? If the data has fewer than three points, or the answer is qualitative, answer in prose instead.\n\n### stat\nA row of up to 4 labeled metric cards, each with an optional trend delta.\nUSE WHEN: Highlighting 2-4 standalone key numbers side by side (e.g. revenue, active users, conversion rate) that the user should compare at a glance.\nDO NOT USE WHEN: Never for a single number — write it directly in the sentence instead. Never for a series of values over time (use chart) or a full record with many fields (use table).\n```zara:stat\n{\"items\":[{\"label\":\"Revenue\",\"value\":\"$482K\",\"delta\":\"+12%\",\"trend\":\"up\"},{\"label\":\"Churn\",\"value\":\"2.1%\",\"delta\":\"-0.4%\",\"trend\":\"down\"}]}\n```\n\n### chart\nA line, bar, area, or pie chart with up to 4 series over up to 30 points. Optionally set a \"colors\" array (hex, one entry per series) to use a custom palette instead of the default.\nUSE WHEN: 3 or more numeric data points over an ordered dimension (time, category) where a visual trend or comparison adds clarity beyond the numbers themselves.\nDO NOT USE WHEN: Never for a single number — write it in the sentence, or use stat for 2-4 standalone numbers. Never for fewer than 3 points or for a qualitative/text comparison.\n```zara:chart\n{\"kind\":\"line\",\"title\":\"Revenue\",\"data\":[{\"x\":\"Jul\",\"revenue\":12},{\"x\":\"Aug\",\"revenue\":19},{\"x\":\"Sep\",\"revenue\":24}],\"series\":[\"revenue\"]}\n```\n\n### table\nA sortable table with up to 4 columns and up to 12 rows.\nUSE WHEN: Structured multi-field records (3 or more rows) the user should scan or compare — pricing tiers, spec sheets, search results.\nDO NOT USE WHEN: Never for 1-2 items — write them in prose. Never for a single-column list — use a markdown bullet list instead.\n```zara:table\n{\"columns\":[\"Model\",\"Price\",\"Speed\"],\"rows\":[[\"A\",\"$10\",\"Fast\"],[\"B\",\"$8\",\"Medium\"]]}\n```\n\n### carousel\nA horizontally-scrollable set of 2-6 titled cards, browsed one at a time. Each item may optionally set its own hex \"color\" for a distinct accent.\nUSE WHEN: 3-6 distinct options, recommendations, or next steps the user should browse — product picks, plan tiers, suggested actions.\nDO NOT USE WHEN: Never for fewer than 3 items — use prose or stat. Never for structured data with several fields per item — use table.\n```zara:carousel\n{\"items\":[{\"title\":\"Starter\",\"description\":\"Good for small teams\"},{\"title\":\"Pro\",\"description\":\"Unlimited projects\"},{\"title\":\"Enterprise\",\"description\":\"Dedicated support\"}]}\n```\n\n### mermaid\nA Mermaid diagram (flowchart, sequence diagram, or entity relationship diagram).\nUSE WHEN: Explaining a process, architecture, sequence of interactions, or relationships between a handful of entities where the structure itself is the point.\nDO NOT USE WHEN: Never for numeric/data comparisons — use chart, table, or stat instead. Never for a simple linear list — use a markdown numbered list. Keep diagrams to a handful of nodes; this renders at a fixed ~200px height.\n```zara:mermaid\n{\"source\":\"flowchart TD\\nA[Request] --> B{Cache hit?}\\nB -->|yes| C[Return cached]\\nB -->|no| D[Fetch + store]\"}\n```\n\nMost replies contain zero blocks. Before emitting one, ask: would a competent analyst draw a picture here? If the data has fewer than three points, or the answer is qualitative, answer in prose instead.\n\nExample — a comparison question answered correctly, with no block:\nQ: \"How does Python compare to JavaScript for scripting?\"\nA: Python tends to read closer to pseudocode and has a larger standard library out of the box, while\nJavaScript's biggest advantage is running natively in every browser and on servers via Node without a\nseparate runtime. For quick scripting, Python usually wins on readability; for anything touching the\nbrowser, JavaScript is unavoidable.\n(No widget — this is a qualitative comparison, not something a table would clarify.)"
+  }
+ ]
+}
