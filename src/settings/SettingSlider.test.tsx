@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { Contrast } from "lucide-react";
+import { Contrast } from "../icons/glyphs";
 import { SettingRow } from "./SettingRow";
 import { SettingSlider } from "./SettingSlider";
 

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Type, X } from "lucide-react";
+import { Type, X } from "../../icons/glyphs";
 import { ShelfTypeIcon } from "../../components/ShelfTypeIcon";
 import type { useShelf } from "../hooks/useShelf";
 import type { ZaraMode } from "../types";

@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
-
 html,
 body {
 	margin: 0;
@@ -56,12 +54,7 @@ img {
 	box-sizing: border-box;
 	/* No overflow:hidden — pseudo-elements for concave corners extend outside the box */
 
-	font-family:
-		"Inter",
-		-apple-system,
-		BlinkMacSystemFont,
-		"Segoe UI",
-		sans-serif;
+	font-family: var(--font-body);
 
 	transition:
 		--notch-bg 0.3s ease,
@@ -314,15 +307,29 @@ img {
 	transform: scale(0.95);
 }
 
+/* The notch's clock: large, tightly tracked figures of equal width (so the clock does not
+   shuffle as the digits change), with a small, quiet AM or PM beside them. */
 .time {
-	font-size: 13px;
-	font-weight: 500;
-	letter-spacing: 0.3px;
+	font-family: var(--font-display);
+	display: inline-flex;
+	align-items: baseline;
+	gap: 3px;
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: -0.2px;
+	font-variant-numeric: tabular-nums;
 	line-height: 1;
 	color: var(--zara-text, white);
 	backface-visibility: hidden;
 	position: absolute;
 	transition: color 0.2s ease;
+}
+
+.clock-period {
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	opacity: 0.5;
 }
 
 .compact-timer {
@@ -816,6 +823,7 @@ img {
 }
 
 .calendar-month-title {
+	font-family: var(--font-display);
 	margin: 0;
 	font-size: 15px;
 	font-weight: 700;
@@ -1699,11 +1707,12 @@ img {
 	height: calc(100% - 36px);
 	box-sizing: border-box;
 	z-index: 2;
-	padding: 12px 14px 12px 14px;
+	padding: 14px 18px 18px;
+	gap: 14px;
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
-	align-items: center;
+	justify-content: flex-start;
+	align-items: stretch;
 	color: var(--zara-text, white);
 	border-radius: 0 0 18px 18px;
 	overflow: hidden;
@@ -2131,237 +2140,239 @@ img {
 	opacity: 0.85;
 }
 
-/* Pills Grid */
-.cc-pills-grid {
+/* ───── Command center: an Apple Control Center layout ─────
+   Four tiles (Wi-Fi, Bluetooth, Notch, Energy Saver), tall level sliders for volume and
+   brightness that fill from the bottom, and a row of round shortcuts. Lit tiles take the
+   theme accent, or green for power saving. */
+.cc-grid {
+	--cc-fill: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
+	--cc-fill-strong: color-mix(in srgb, var(--zara-text, white) 14%, transparent);
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: 1fr 46px 46px;
 	gap: 10px;
 	width: 100%;
-	height: 78px;
+	height: 184px;
+	flex: none;
 }
 
-.cc-pill-tile {
-	display: flex;
-	align-items: center;
+.cc-tiles {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
 	gap: 8px;
-	padding: 5px 8px;
-	border-radius: 10px;
-	background: var(--zara-group-bg, rgba(255, 255, 255, 0.04));
-	border: 1px solid var(--zara-border, rgba(255, 255, 255, 0.02));
-	cursor: pointer;
-	transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-	user-select: none;
-	height: 34px;
-	box-sizing: border-box;
+	min-width: 0;
 }
 
-.cc-pill-tile:hover {
-	background: var(--zara-border, rgba(255, 255, 255, 0.08));
-	transform: translateY(-0.5px);
+.cc-tile {
+	--cc-lit: var(--zara-accent, #0a84ff);
+	position: relative;
+	min-width: 0;
+	border-radius: 22px;
+	background: var(--cc-fill);
+	color: var(--zara-text, white);
+	transition:
+		background 0.2s ease,
+		transform 0.12s ease;
 }
 
-.cc-pill-tile:active {
-	transform: scale(0.98);
+.cc-tile--green {
+	--cc-lit: #30d158;
 }
 
-.cc-pill-icon-wrapper {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 20px;
-	height: 20px;
-	border-radius: 50%;
-	background: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
-	color: var(--zara-text, rgba(255, 255, 255, 0.9));
-	transition: all 0.15s ease;
+.cc-tile.lit {
+	background: var(--cc-lit);
+	color: #fff;
 }
 
-.cc-pill-icon-wrapper svg {
-	width: 12px;
-	height: 12px;
+.cc-tile:active {
+	transform: scale(0.97);
 }
 
-.cc-pill-info {
+.cc-tile-main {
+	position: absolute;
+	inset: 0;
 	display: flex;
 	flex-direction: column;
+	justify-content: space-between;
+	align-items: flex-start;
 	min-width: 0;
-	line-height: 1.15;
-}
-
-.cc-pill-title {
-	font-size: 9px;
-	font-weight: 600;
-	color: var(--zara-text, rgba(255, 255, 255, 0.9));
-}
-
-.cc-pill-status {
-	font-size: 7.5px;
-	color: var(--zara-text-muted, rgba(255, 255, 255, 0.4));
-	font-weight: 500;
-	/* The connected network's name can be long. */
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* Active Monochrome pill states */
-.cc-pill-tile.active {
-	background: var(--zara-text, rgba(255, 255, 255, 0.95));
-	border-color: var(--zara-text, rgba(255, 255, 255, 0.95));
-}
-
-.cc-pill-tile.active .cc-pill-title {
-	color: var(--zara-bg-expanded, rgba(0, 0, 0, 0.9));
-}
-
-.cc-pill-tile.active .cc-pill-status {
-	color: var(--zara-bg-expanded, rgba(0, 0, 0, 0.5));
-}
-
-.cc-pill-tile.active .cc-pill-icon-wrapper {
-	background: var(--zara-group-bg, rgba(0, 0, 0, 0.08));
-	color: var(--zara-bg-expanded, #000);
-}
-
-/* Opens a tile's detail view from the controls panel. */
-.cc-pill-more {
-	margin-left: auto;
-	width: 18px;
-	height: 18px;
-	padding: 0;
-	flex: none;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	padding: 13px 14px 12px;
 	border: none;
-	border-radius: 6px;
+	border-radius: inherit;
+	background: transparent;
+	color: inherit;
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.cc-tile-main:focus-visible,
+.cc-tile-more:focus-visible,
+.cc-action:focus-visible,
+.level-slider:focus-visible {
+	outline: 2px solid var(--zara-accent, #0a84ff);
+	outline-offset: 1px;
+}
+
+.cc-tile-icon {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.cc-tile.lit .cc-tile-icon {
+	background: rgba(255, 255, 255, 0.24);
+}
+
+.cc-tile-icon svg {
+	width: 17px;
+	height: 17px;
+}
+
+.cc-tile-text {
+	display: block;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.cc-tile-title {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.cc-tile-status {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	margin-top: 2px;
+	font-size: 11.5px;
+	line-height: 1.3;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	opacity: 0.62;
+}
+
+.cc-tile-more {
+	position: absolute;
+	top: 9px;
+	right: 9px;
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
 	background: transparent;
 	color: inherit;
 	opacity: 0.55;
 	cursor: pointer;
 	transition:
-		opacity 0.15s ease,
-		background 0.15s ease;
+		background 0.15s ease,
+		opacity 0.15s ease;
 }
 
-.cc-pill-more:hover {
+.cc-tile-more:hover {
+	background: rgba(255, 255, 255, 0.2);
 	opacity: 1;
-	background: var(--zara-group-bg, rgba(255, 255, 255, 0.12));
 }
 
-.cc-pill-more svg {
-	width: 12px;
-	height: 12px;
+/* Level slider: a tall track that fills from the bottom, the icon at its foot. */
+.level-slider {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: center;
+	overflow: hidden;
+	border-radius: 23px;
+	background: var(--cc-fill);
+	cursor: pointer;
+	touch-action: none;
+	user-select: none;
+	outline: none;
 }
 
-.cc-pill-tile.active .cc-pill-more {
-	color: var(--zara-bg-expanded, black);
+.level-fill {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--zara-text, white);
+	opacity: 0.92;
+	transition: height 0.12s ease-out;
 }
 
-/* Circular Actions Row */
-.cc-circular-actions-row {
+.level-slider.dragging .level-fill {
+	transition: none;
+}
+
+.level-icon {
+	position: relative;
+	display: grid;
+	place-items: center;
+	height: 46px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.65));
+	transition: color 0.15s ease;
+}
+
+.level-icon[data-covered="true"] {
+	color: var(--zara-bg-expanded, #000);
+}
+
+.level-icon svg {
+	width: 18px;
+	height: 18px;
+}
+
+.cc-actions {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	width: 100%;
-	padding: 0 4px;
+	flex: none;
 }
 
-.cc-circular-btn {
-	width: 32px;
-	height: 32px;
+.cc-action {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: none;
 	border-radius: 50%;
-	background: var(--zara-group-bg, rgba(255, 255, 255, 0.04));
-	border: 1px solid var(--zara-border, rgba(255, 255, 255, 0.02));
-	color: var(--zara-text-muted, rgba(255, 255, 255, 0.7));
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	background: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
+	color: var(--zara-text, white);
 	cursor: pointer;
-	transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+	transition:
+		background 0.15s ease,
+		transform 0.12s ease;
 }
 
-.cc-circular-btn:hover {
-	background: var(--zara-border, rgba(255, 255, 255, 0.1));
-	color: var(--zara-text, #fff);
-	transform: translateY(-1px);
+.cc-action:hover {
+	background: color-mix(in srgb, var(--zara-text, white) 16%, transparent);
 }
 
-.cc-circular-btn:active {
-	transform: scale(0.95) translateY(0);
+.cc-action:active {
+	transform: scale(0.94);
 }
 
-.cc-circular-btn.active {
-	background: var(--zara-text, #ffffff);
-	border-color: var(--zara-text, #ffffff);
-	color: var(--zara-bg-expanded, #000000);
-	box-shadow: 0 2px 8px var(--zara-border, rgba(255, 255, 255, 0.1));
-}
-
-.cc-circular-btn.active:hover {
-	background: rgba(255, 255, 255, 0.9);
-}
-
-/* Classic Sliders Area */
-.cc-classic-sliders-area {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	width: 100%;
-}
-
-.cc-classic-slider-row {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	width: 100%;
+.cc-action svg {
+	width: 18px;
 	height: 18px;
-	position: relative;
 }
 
-.cc-classic-slider-label {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	width: 75px;
-	font-size: 9px;
-	font-weight: 600;
-	color: var(--zara-text-muted, rgba(255, 255, 255, 0.65));
-}
-
-.cc-classic-slider-label svg {
-	opacity: 0.7;
-	width: 12px;
-	height: 12px;
-}
-
-/* The Glisse slider is 40px tall with its track 16px in from each side and 24px down;
-   position it so that track lands on the row's centre line, thumb overhanging. */
-.notch-glass-slider {
-	flex: 1;
-	height: 18px;
-	position: relative;
-}
-
-.cc-classic-slider-row .notch-glass-slider .lg-slider {
-	position: absolute;
-	top: -15px;
-	left: -16px;
-	right: -16px;
-	width: auto;
-}
-
-.cc-classic-percentage {
-	width: 28px;
-	text-align: right;
-	font-size: 9px;
-	font-weight: 600;
-	color: var(--zara-text-muted, rgba(255, 255, 255, 0.55));
-	font-variant-numeric: tabular-nums;
-}
-
-.cc-classic-slider-row:hover .cc-classic-percentage {
-	color: var(--zara-text, rgba(255, 255, 255, 0.85));
+@media (prefers-reduced-motion: reduce) {
+	.cc-tile,
+	.cc-action,
+	.level-fill {
+		transition: none;
+	}
 }
 
 /* Light Mode overrides for Notch App components */
@@ -2386,17 +2397,12 @@ img {
 
 .light-mode .volume-slider-bar,
 .light-mode .brightness-slider-bar,
-.light-mode .cc-classic-slider,
 .light-mode .slider-track-premium {
 	background: rgba(0, 0, 0, 0.12);
 }
 
 .light-mode .slider-track-premium:hover {
 	background: rgba(0, 0, 0, 0.18);
-}
-
-.light-mode .cc-classic-slider-row svg {
-	color: var(--zara-text);
 }
 
 /* ===== Immersive Media Player (iPhone Dynamic Island style) ===== */
@@ -2740,4 +2746,664 @@ img {
 .cmp-output-check {
 	font-size: 11px;
 	opacity: 0.6;
+}
+
+/* Stealth mode on: a fine dotted rim just inside the notch, and a mask beside the clock.
+   Violet while stealth is holding, amber when it was asked for and is not. Dotted rather
+   than dashed, so it is never mistaken for the shelf's drag-over outline. The rim fades
+   with the assistant panel's bottom fade, like the glass layer. */
+.stealth-rim {
+	--stealth-colour: rgba(196, 181, 253, 0.8);
+	position: absolute;
+	inset: 3px;
+	z-index: 0;
+	border: 1.5px dotted var(--stealth-colour);
+	border-radius: inherit;
+	pointer-events: none;
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		#000 var(--surface-fade-start),
+		transparent var(--surface-fade-end)
+	);
+	mask-image: linear-gradient(
+		to bottom,
+		#000 var(--surface-fade-start),
+		transparent var(--surface-fade-end)
+	);
+}
+
+.stealth-rim[data-state="problem"] {
+	--stealth-colour: rgba(251, 191, 36, 0.85);
+}
+
+.stealth-badge {
+	position: absolute;
+	right: calc(100% - 6px);
+	top: 50%;
+	display: grid;
+	place-items: center;
+	width: 18px;
+	height: 18px;
+	transform: translateY(-50%);
+	color: rgb(196, 181, 253);
+}
+
+.stealth-badge[data-state="problem"] {
+	color: rgb(251, 191, 36);
+}
+
+.light-mode .stealth-rim {
+	--stealth-colour: rgba(109, 40, 217, 0.7);
+}
+
+.light-mode .stealth-badge {
+	color: rgb(109, 40, 217);
+}
+
+/* ───── Notes panel ───── */
+.notes-panel {
+	--note-fill: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px 14px 14px;
+	color: var(--zara-text, white);
+	border-radius: 0 0 18px 18px;
+	overflow: hidden;
+}
+
+.notes-add {
+	display: flex;
+	flex: none;
+	gap: 6px;
+}
+
+.notes-add-field {
+	flex: 1;
+	min-width: 0;
+	height: 34px;
+	padding: 0 14px;
+	border: none;
+	border-radius: 17px;
+	background: var(--note-fill);
+	color: inherit;
+	font-family: inherit;
+	font-size: 13px;
+	outline: none;
+}
+
+.notes-add-field::placeholder {
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.notes-add-field:focus-visible,
+.note-body:focus-visible,
+.note-delete:focus-visible,
+.notes-add-button:focus-visible {
+	outline: 2px solid var(--zara-accent, #0a84ff);
+	outline-offset: 1px;
+}
+
+.notes-add-button {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: var(--zara-accent, #0a84ff);
+	color: #fff;
+	cursor: pointer;
+	transition: opacity 0.15s ease;
+}
+
+.notes-add-button:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.notes-message {
+	margin: auto;
+	font-size: 12px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.55));
+	text-align: center;
+}
+
+.notes-list {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	overflow-y: auto;
+	scrollbar-width: thin;
+}
+
+.note-card {
+	--note-color: #ffd60a;
+	position: relative;
+	display: flex;
+	flex: none;
+	border-left: 3px solid var(--note-color);
+	border-radius: 12px;
+	background: var(--note-fill);
+}
+
+.note-card[data-color="pink"] {
+	--note-color: #ff375f;
+}
+
+.note-card[data-color="blue"] {
+	--note-color: #0a84ff;
+}
+
+.note-card[data-color="purple"] {
+	--note-color: #bf5af2;
+}
+
+.note-card[data-color="green"] {
+	--note-color: #30d158;
+}
+
+.note-body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	padding: 8px 32px 8px 10px;
+	border: none;
+	border-radius: inherit;
+	background: transparent;
+	color: inherit;
+	font-family: inherit;
+	text-align: left;
+	cursor: text;
+}
+
+.note-title {
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.note-text {
+	display: -webkit-box;
+	overflow: hidden;
+	font-size: 12.5px;
+	line-height: 1.35;
+	white-space: pre-wrap;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+}
+
+.note-age {
+	font-size: 10px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.note-delete {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+	opacity: 0;
+	cursor: pointer;
+	transition:
+		opacity 0.15s ease,
+		background 0.15s ease;
+}
+
+.note-card:hover .note-delete,
+.note-delete:focus-visible {
+	opacity: 1;
+}
+
+.note-delete:hover {
+	background: color-mix(in srgb, var(--zara-text, white) 14%, transparent);
+	color: var(--zara-text, white);
+}
+
+.note-edit {
+	flex: 1;
+	margin: 4px;
+	padding: 6px 8px;
+	border: none;
+	border-radius: 8px;
+	background: color-mix(in srgb, var(--zara-text, white) 8%, transparent);
+	color: inherit;
+	font-family: inherit;
+	font-size: 12.5px;
+	line-height: 1.35;
+	resize: none;
+	outline: 2px solid var(--zara-accent, #0a84ff);
+}
+
+/* ───── Weather panel ───── */
+.weather-panel {
+	--weather-fill: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 6px 16px 14px;
+	color: var(--zara-text, white);
+	border-radius: 0 0 18px 18px;
+	overflow: hidden;
+}
+
+.weather-now {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 12px;
+}
+
+.weather-now-icon {
+	flex: none;
+}
+
+.weather-now-main {
+	display: flex;
+	flex-direction: column;
+}
+
+.weather-temperature {
+	font-family: var(--font-display);
+	font-size: 34px;
+	font-weight: 300;
+	line-height: 1;
+	letter-spacing: -1px;
+	font-variant-numeric: tabular-nums;
+}
+
+.weather-condition {
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+.weather-now-place {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-left: auto;
+	font-size: 11px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+	text-align: right;
+}
+
+.weather-now-place strong {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--zara-text, white);
+}
+
+.weather-hours {
+	display: flex;
+	flex: none;
+	justify-content: space-between;
+	margin: 0;
+	padding: 10px 6px;
+	list-style: none;
+	border-radius: 14px;
+	background: var(--weather-fill);
+}
+
+.weather-hour {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	min-width: 40px;
+}
+
+.weather-hour-time {
+	font-size: 10.5px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.weather-hour-temperature {
+	font-size: 12px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.weather-days {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	justify-content: space-around;
+	min-height: 0;
+	margin: 0;
+	padding: 4px 12px;
+	list-style: none;
+	border-radius: 14px;
+	background: var(--weather-fill);
+}
+
+.weather-day {
+	display: grid;
+	grid-template-columns: 44px 20px 28px 1fr 28px;
+	align-items: center;
+	gap: 8px;
+	min-height: 26px;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.weather-day-name {
+	font-weight: 600;
+}
+
+.weather-day-low {
+	text-align: right;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.weather-day-high {
+	font-weight: 600;
+}
+
+.weather-range {
+	position: relative;
+	height: 4px;
+	border-radius: 2px;
+	background: color-mix(in srgb, var(--zara-text, white) 12%, transparent);
+}
+
+.weather-range-fill {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	border-radius: 2px;
+	background: linear-gradient(90deg, #64d2ff, #ffd60a, #ff9f0a);
+}
+
+.weather-message {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	margin: auto;
+	font-size: 12.5px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+	text-align: center;
+}
+
+.weather-message p {
+	margin: 0;
+}
+
+.weather-retry {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 30px;
+	padding: 0 14px;
+	border: none;
+	border-radius: 15px;
+	background: color-mix(in srgb, var(--zara-text, white) 14%, transparent);
+	color: var(--zara-text, white);
+	font-family: inherit;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.weather-retry:focus-visible {
+	outline: 2px solid var(--zara-accent, #0a84ff);
+	outline-offset: 2px;
+}
+
+/* ───── Clipboard panel ───── */
+.clipboard-panel {
+	--clip-fill: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 6px 14px 12px;
+	color: var(--zara-text, white);
+	border-radius: 0 0 18px 18px;
+	overflow: hidden;
+}
+
+.clipboard-header {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: space-between;
+	height: 26px;
+}
+
+.clipboard-header h2 {
+	font-family: var(--font-display);
+	margin: 0;
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: -0.2px;
+}
+
+.clipboard-clear {
+	height: 24px;
+	padding: 0 10px;
+	border: none;
+	border-radius: 12px;
+	background: transparent;
+	color: var(--zara-accent, #0a84ff);
+	font-family: inherit;
+	font-size: 11px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.clipboard-clear:hover {
+	background: var(--clip-fill);
+}
+
+.clipboard-clear:focus-visible,
+.clipboard-body:focus-visible,
+.clipboard-delete:focus-visible {
+	outline: 2px solid var(--zara-accent, #0a84ff);
+	outline-offset: 1px;
+}
+
+.clipboard-message {
+	margin: auto;
+	font-size: 12px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.55));
+	text-align: center;
+}
+
+.clipboard-list {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	overflow-y: auto;
+	scrollbar-width: thin;
+}
+
+.clipboard-item {
+	position: relative;
+	display: flex;
+	flex: none;
+	border-radius: 12px;
+	background: var(--clip-fill);
+}
+
+.clipboard-body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	padding: 8px 32px 8px 12px;
+	border: none;
+	border-radius: inherit;
+	background: transparent;
+	color: inherit;
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+.clipboard-body:hover {
+	background: color-mix(in srgb, var(--zara-text, white) 7%, transparent);
+}
+
+.clipboard-text {
+	display: -webkit-box;
+	overflow: hidden;
+	font-size: 12.5px;
+	line-height: 1.35;
+	word-break: break-word;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+}
+
+.clipboard-meta {
+	font-size: 10px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.clipboard-copied {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	color: #30d158;
+	font-weight: 600;
+}
+
+.clipboard-delete {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+	opacity: 0;
+	cursor: pointer;
+	transition:
+		opacity 0.15s ease,
+		background 0.15s ease;
+}
+
+.clipboard-item:hover .clipboard-delete,
+.clipboard-delete:focus-visible {
+	opacity: 1;
+}
+
+.clipboard-delete:hover {
+	background: color-mix(in srgb, var(--zara-text, white) 14%, transparent);
+	color: var(--zara-text, white);
+}
+
+.clipboard-note {
+	flex: none;
+	white-space: normal;
+	text-wrap: balance;
+	margin: 0;
+	font-size: 10px;
+	line-height: 1.4;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.5));
+	text-align: center;
+}
+
+/* The apps the user pinned to the command center: up to four icon tiles. */
+.cc-apps {
+	display: flex;
+	flex: none;
+	justify-content: space-between;
+	gap: 10px;
+	width: 100%;
+}
+
+.cc-app {
+	display: grid;
+	place-items: center;
+	flex: 1;
+	max-width: 82px;
+	height: 54px;
+	padding: 0;
+	border: none;
+	border-radius: 18px;
+	background: var(--cc-fill, var(--zara-group-bg, rgba(255, 255, 255, 0.08)));
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		transform 0.12s ease;
+}
+
+.cc-app:hover {
+	background: color-mix(in srgb, var(--zara-text, white) 14%, transparent);
+}
+
+.cc-app:active {
+	transform: scale(0.95);
+}
+
+.cc-app:focus-visible {
+	outline: 2px solid var(--zara-accent, #0a84ff);
+	outline-offset: 1px;
+}
+
+.app-icon {
+	display: block;
+	object-fit: contain;
+	border-radius: 7px;
+}
+
+.app-icon--fallback {
+	display: grid;
+	place-items: center;
+	background: color-mix(in srgb, var(--zara-text, white) 16%, transparent);
+	color: var(--zara-text, white);
+	font-weight: 700;
+}
+
+.app-icon--loading {
+	background: color-mix(in srgb, var(--zara-text, white) 8%, transparent);
 }

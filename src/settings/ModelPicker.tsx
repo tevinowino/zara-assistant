@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { Check, ChevronsUpDown, RotateCw, Search } from "lucide-react";
+import { Check, ChevronsUpDown, RotateCw, Search } from "../icons/glyphs";
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
 

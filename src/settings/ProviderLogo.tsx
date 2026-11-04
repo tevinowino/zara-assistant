@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import { Plug } from "lucide-react";
+import { Plug } from "../icons/glyphs";
 import OpenAiMark from "../assets/providers/openai.svg?react";
 import AnthropicMark from "../assets/providers/anthropic.svg?react";
 import GeminiMark from "../assets/providers/gemini.svg?react";

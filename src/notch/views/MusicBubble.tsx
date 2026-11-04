@@ -1,6 +1,6 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Music } from "lucide-react";
+import { Music } from "../../icons/glyphs";
 import type { MediaInfo, NotchPanel } from "../types";
 
 export interface MusicBubbleProps {

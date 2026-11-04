@@ -7,7 +7,7 @@ import {
 	useState,
 	type CSSProperties
 } from "react";
-import { Check, ChevronRight, Sparkles } from "lucide-react";
+import { Check, ChevronRight, Sparkles } from "../icons/glyphs";
 import { ThinkingOrb, type OrbState } from "thinking-orbs";
 import { parseReasoning, splitInline, type Thought } from "./lib/reasoning";
 import { STEP_DESCRIPTION, currentStepKind, durationOf, formatDuration } from "./lib/thinkingTrace";

@@ -42,22 +42,19 @@ import { AI_PANEL_HEIGHT, AI_PANEL_WIDTH, fitAiPanelHeight } from "./ai/panelSiz
 const AiPanel = lazy(() => loadAiPanel().then((module) => ({ default: module.ConnectedAiPanel })));
 import { useConnectedDevices } from "./hooks/useConnectedDevices";
 
-import {
-	Cpu,
-	MemoryStick,
-	HardDrive,
-	ArrowUpDown,
-	BellRing,
-	ChevronLeft,
-	ChevronRight
-} from "lucide-react";
+import { Cpu, MemoryStick, HardDrive, ArrowUpDown, BellRing, ChevronLeft, ChevronRight } from "./icons/glyphs";
 
 import { BatteryIcon } from "./notch/icons/StatusIcons";
 
 import { Visualizer } from "./notch/components/Visualizer";
-import { type NotchPanel, NOTCH_PANELS, asNotchPanel, type ZaraMode } from "./notch/types";
+import { type NotchPanel, asNotchPanel, type ZaraMode } from "./notch/types";
+import { isPanelEnabled } from "./notch/panels/notchPanels";
 
 import { useTimer } from "./notch/timer/useTimer";
+import { useStealth } from "./stealth/useStealth";
+import { ClockFace } from "./notch/clock/ClockFace";
+import { clockParts, sameClockParts, type ClockParts } from "./notch/clock/clockParts";
+import { StealthBadge, StealthRim } from "./notch/components/StealthMark";
 import { useSystemStats } from "./notch/hooks/useSystemStats";
 import { useBattery } from "./notch/hooks/useBattery";
 import { useMediaPlayback } from "./notch/hooks/useMediaPlayback";
@@ -72,7 +69,23 @@ import {
 	CalendarTimerPanel
 } from "./notch/views/CalendarTimerPanel";
 import { DeviceAlertBubble } from "./notch/views/DeviceAlertBubble";
-import { ControlsPanel } from "./notch/views/ControlsPanel";
+import {
+	COMMAND_CENTER_PANEL_WIDTH_PX,
+	commandCenterPanelHeight,
+	ControlsPanel
+} from "./notch/views/ControlsPanel";
+import { NOTES_PANEL_HEIGHT_PX, NOTES_PANEL_WIDTH_PX, NotesPanel } from "./notch/views/NotesPanel";
+import {
+	WEATHER_PANEL_HEIGHT_PX,
+	WEATHER_PANEL_WIDTH_PX,
+	WeatherPanel
+} from "./notch/views/WeatherPanel";
+import {
+	CLIPBOARD_PANEL_HEIGHT_PX,
+	CLIPBOARD_PANEL_WIDTH_PX,
+	ClipboardPanel
+} from "./notch/views/ClipboardPanel";
+import { useClipboardMonitor } from "./notch/clipboard/useClipboardHistory";
 import { MusicPlayerView } from "./notch/views/MusicPlayerView";
 import { MusicBubble } from "./notch/views/MusicBubble";
 import { ShelfBubble } from "./notch/views/ShelfBubble";
@@ -91,7 +104,7 @@ function App() {
 		return initTheme();
 	}, []);
 
-	const [time, setTime] = useState("");
+	const [clock, setClock] = useState<ClockParts>({ time: "", dayPeriod: null });
 	const [isHovered, setIsHovered] = useState(false);
 	// Expanded into a panel by a click. Hover alone only peeks.
 	const [isOpen, setIsOpen] = useState(false);
@@ -113,8 +126,8 @@ function App() {
 		waitForStartupSplash,
 		settingsWeatherEnabled,
 		settingsCalendarEnabled,
-		settingsControlsPanelEnabled,
-		settingsAiPanelEnabled,
+		panelPreferences,
+		quickApps,
 		settingsDevicesPanelEnabled,
 		settingsTimerSoundEnabled,
 		settingsMusicModeEnabled,
@@ -599,6 +612,9 @@ function App() {
 			prev === "wifi" ||
 			prev === "bluetooth" ||
 			prev === "devices" ||
+			prev === "notes" ||
+			prev === "clipboard" ||
+			prev === "weather" ||
 			prev === "ai"
 				? restingModeRef.current
 				: prev
@@ -636,6 +652,8 @@ function App() {
 			target.closest(".ask-bar") ||
 			target.closest(".zai-panel") ||
 			target.closest(".shelf-content") ||
+			target.closest(".notes-panel") ||
+			target.closest(".clipboard-panel") ||
 			target.closest(".qp-list")
 		) {
 			return;
@@ -651,24 +669,21 @@ function App() {
 		if (cycleZaraMode(delta > 0 ? 1 : -1)) lastScrollTime.current = now;
 	};
 
-	function panelEnabled(panel: NotchPanel) {
-		if (panel === "ai") return settingsAiPanelEnabled;
-		if (panel === "calendar") return settingsCalendarEnabled;
-		if (panel === "command-center") return settingsControlsPanelEnabled;
-		return settingsDevicesPanelEnabled;
+	// The widgets the user chose, in the order the notch cycles through them. The
+	// preference always holds at least one, so the open notch is never empty.
+	const enabledPanels = panelPreferences.enabled;
+
+	function panelAvailable(panel: NotchPanel) {
+		return isPanelEnabled(panelPreferences, panel);
 	}
 
-	// Settings keeps at least one panel on; if a hand-edited settings file turns
-	// them all off, Controls stays so the open notch is never empty.
-	function panelAvailable(panel: NotchPanel) {
-		if (!NOTCH_PANELS.some(panelEnabled)) return panel === "command-center";
-		return panelEnabled(panel);
-	}
+	// The clipboard is only watched while its widget is on, and only by the notch itself.
+	useClipboardMonitor(windowLabel === "main" && isPanelEnabled(panelPreferences, "clipboard"));
 
 	// Wheel and swipe navigate panels, even from a collapsed live activity.
 	// Music and shelf remain entry points through their activity affordances.
 	const cycleZaraMode = (direction: 1 | -1) => {
-		const panels = NOTCH_PANELS.filter(panelAvailable);
+		const panels = enabledPanels;
 		const currentIndex = panels.indexOf(zaraMode as NotchPanel);
 		const nextMode =
 			currentIndex === -1
@@ -681,7 +696,7 @@ function App() {
 
 	// Arrows and wheel both stay within panels once one is open.
 	const cyclePanel = (direction: 1 | -1) => {
-		const panels = NOTCH_PANELS.filter(panelAvailable);
+		const panels = enabledPanels;
 		const index = panels.indexOf(zaraMode as NotchPanel);
 		if (index === -1 || panels.length < 2) return;
 		setZaraMode(panels[(index + direction + panels.length) % panels.length]);
@@ -694,6 +709,9 @@ function App() {
 		triggerEventPeek
 	});
 	const { timerSeconds, isTimerFinished, formatTimerTime, resetTimer } = timer;
+	const stealth = useStealth();
+	const stealthOn = stealth.status?.requested === true;
+	const stealthHolding = stealth.status?.active === true;
 
 	const media = useMediaPlayback({
 		musicModeEnabled: settingsMusicModeEnabled,
@@ -734,7 +752,7 @@ function App() {
 	const openingPanel = (): NotchPanel => {
 		const preferred = rememberPanelEnabled ? (lastPanel ?? defaultPanel) : defaultPanel;
 		if (panelAvailable(preferred)) return preferred;
-		return NOTCH_PANELS.find(panelAvailable) ?? "command-center";
+		return enabledPanels[0] ?? "command-center";
 	};
 
 	// Expands the notch into a panel, or into an activity's own view.
@@ -858,8 +876,8 @@ function App() {
 	// the calendar panel) the notch stays open and takes keyboard focus; when they
 	// stop, focus goes back to the app they were in. The notch window normally
 	// never takes focus, so this is explicit.
-	const [askBarFocused, setAskBarFocused] = useState(false);
-	const keyboardFocusWanted = wantsKeyboardFocus({ mode: zaraMode, isOpen, askBarFocused });
+	const [fieldFocused, setFieldFocused] = useState(false);
+	const keyboardFocusWanted = wantsKeyboardFocus({ mode: zaraMode, isOpen, fieldFocused });
 	useDeferredKeyboardFocus(keyboardFocusWanted, windowLabel === "main");
 	useEffect(() => {
 		if (windowLabel !== "main") return;
@@ -884,14 +902,7 @@ function App() {
 		if (panel && !panelAvailable(panel)) {
 			setZaraMode(isOpen ? openingPanel() : collapsedMode);
 		}
-	}, [
-		settingsAiPanelEnabled,
-		settingsCalendarEnabled,
-		settingsControlsPanelEnabled,
-		settingsDevicesPanelEnabled,
-		zaraMode,
-		isOpen
-	]);
+	}, [panelPreferences, zaraMode, isOpen]);
 
 	// Leave the music view when music is turned off or the player ends its media
 	// session: an open notch falls back to the remembered panel.
@@ -923,14 +934,9 @@ function App() {
 	// Update time
 	useEffect(() => {
 		const updateTime = () => {
-			const now = new Date();
-			setTime(
-				now.toLocaleTimeString([], {
-					hour: "2-digit",
-					minute: "2-digit",
-					hour12: !timeFormat24h
-				})
-			);
+			const next = clockParts(new Date(), !timeFormat24h);
+			// Same reading, same object: the notch is not redrawn every second for nothing.
+			setClock((shown) => (sameClockParts(shown, next) ? shown : next));
 		};
 
 		updateTime();
@@ -1236,7 +1242,10 @@ function App() {
 		if (zaraMode === "ai") return AI_PANEL_WIDTH;
 		if (isCalendarMode) return CALENDAR_TIMER_PANEL_WIDTH_PX;
 		if (zaraMode === "shelf") return 380;
-		if (zaraMode === "command-center" && isOpen) return 350;
+		if (zaraMode === "notes") return NOTES_PANEL_WIDTH_PX;
+		if (zaraMode === "weather") return WEATHER_PANEL_WIDTH_PX;
+		if (zaraMode === "clipboard") return CLIPBOARD_PANEL_WIDTH_PX;
+		if (zaraMode === "command-center" && isOpen) return COMMAND_CENTER_PANEL_WIDTH_PX;
 		if (zaraMode === "wifi" || zaraMode === "bluetooth" || zaraMode === "devices") return 350;
 		if (showMusicOnStatusHover) {
 			return 170 + (settingsVisualizerEnabled ? 30 : 0);
@@ -1276,7 +1285,11 @@ function App() {
 			if (shelfItems.length === 0) return 130;
 			return shelfOverflowing ? 190 : 176;
 		}
-		if (zaraMode === "command-center") return isOpen ? 230 : 36;
+		if (zaraMode === "command-center")
+			return isOpen ? commandCenterPanelHeight(quickApps.length) : 36;
+		if (zaraMode === "notes") return NOTES_PANEL_HEIGHT_PX;
+		if (zaraMode === "weather") return WEATHER_PANEL_HEIGHT_PX;
+		if (zaraMode === "clipboard") return CLIPBOARD_PANEL_HEIGHT_PX;
 		if (zaraMode === "devices") {
 			return devicesPanelHeight;
 		}
@@ -1298,8 +1311,7 @@ function App() {
 	const isCalendarMode = zaraMode === "calendar";
 	// Arrows switch between the two tool panels; wheel/swipe can also open one
 	// directly from the collapsed pill or a live activity.
-	const showPanelArrows =
-		isOpen && asNotchPanel(zaraMode) !== null && NOTCH_PANELS.filter(panelAvailable).length > 1;
+	const showPanelArrows = isOpen && asNotchPanel(zaraMode) !== null && enabledPanels.length > 1;
 
 	// Close compact media player expansions when notch is unhovered or mode changes
 	useEffect(() => {
@@ -1372,7 +1384,7 @@ function App() {
 				<DeviceArtDefs />
 				<motion.div
 					ref={zaraRef}
-					className={`zara ${isHovered ? "expanded" : ""} ${isImpacted ? "is-impacted" : ""} ${isDragHovering ? "drag-hover" : ""} ${zaraMode === "ai" && isOpen ? "fade-bottom" : ""}`}
+					className={`zara ${isHovered ? "expanded" : ""} ${isImpacted ? "is-impacted" : ""} ${isDragHovering ? "drag-hover" : ""} ${zaraMode === "ai" && isOpen ? "fade-bottom" : ""} ${stealthOn ? "stealth-on" : ""}`}
 					onMouseEnter={() => {
 						setIsNotchHovered(true);
 						void loadAiPanel().catch(() => {});
@@ -1432,6 +1444,7 @@ function App() {
 					}}
 				>
 					<EdgeSurface edge="top" flares={isImpacted} />
+					{stealthOn && <StealthRim active={stealthHolding} />}
 					<AnimatePresence>
 						{isMusicMode && settingsAmbienceEnabled && albumArtUrl && isOpen && !isCalendarMode && (
 							<motion.div
@@ -1570,6 +1583,12 @@ function App() {
 
 															{/* Center - Time (always visible) */}
 															<div className="time-center" ref={timeCenterRef}>
+																{stealthOn && (
+																	<StealthBadge
+																		active={stealthHolding}
+																		problem={stealth.status?.problem ?? null}
+																	/>
+																)}
 																<AnimatePresence>
 																	{showPanelArrows && (
 																		<motion.button
@@ -1619,7 +1638,7 @@ function App() {
 																				exit={{ rotateX: 90, opacity: 0 }}
 																				transition={{ type: "spring", stiffness: 600, damping: 30 }}
 																			>
-																				{time}
+																				<ClockFace {...clock} />
 																			</motion.span>
 																		)}
 																	</AnimatePresence>
@@ -1825,15 +1844,29 @@ function App() {
 													onClose={closeAiPanel}
 													onDesiredHeight={setAiPanelHeight}
 													notchActions={notchActions}
+													stealth={stealth}
 												/>
 											</Suspense>
 										</motion.div>
 									)}
 								</AnimatePresence>
 
+								{/* Notes Panel */}
+								<NotesPanel zaraMode={zaraMode} onFieldFocusChange={setFieldFocused} />
+
+								{/* Clipboard Panel */}
+								<ClipboardPanel zaraMode={zaraMode} />
+
+								{/* Weather Panel */}
+								<WeatherPanel zaraMode={zaraMode} timeFormat24h={timeFormat24h} />
+
 								{/* Command Center Panel */}
 								<ControlsPanel
 									quick={quick}
+									quickApps={quickApps}
+									openQuickApp={(quickApp) => {
+										invoke("open_app", { appName: quickApp.target }).catch(console.error);
+									}}
 									displayVolume={displayVolume}
 									handleVolumeChange={handleVolumeChange}
 									notchMode={notchMode}
@@ -1865,7 +1898,7 @@ function App() {
 											? {
 													busy: aiBusy,
 													onSubmit: askZara,
-													onFocusChange: setAskBarFocused
+													onFocusChange: setFieldFocused
 												}
 											: undefined
 									}

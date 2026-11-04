@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Laptop, LoaderCircle, MonitorSmartphone, Zap } from "lucide-react";
+import { Laptop, LoaderCircle, MonitorSmartphone, Zap } from "../icons/glyphs";
 import { DeviceArt } from "../devices/DeviceArt";
 import { deviceArtFor } from "../devices/deviceArtFor";
 import {

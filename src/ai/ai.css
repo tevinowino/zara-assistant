@@ -2119,3 +2119,14 @@
 	font-size: 10.5px;
 	font-variant-numeric: tabular-nums;
 }
+
+/* The header's stealth button: tinted violet while stealth mode is on. */
+.zai-stealth-button.on {
+	background: color-mix(in srgb, rgb(167, 139, 250) 22%, transparent);
+	color: rgb(196, 181, 253);
+}
+
+.zai-stealth-button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}

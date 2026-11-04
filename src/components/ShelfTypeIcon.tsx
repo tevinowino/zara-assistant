@@ -1,18 +1,4 @@
-import {
-	AppWindow,
-	Disc,
-	File,
-	FileArchive,
-	FileCode,
-	FileImage,
-	FileMusic,
-	FileSpreadsheet,
-	FileText,
-	FileType,
-	FileVideoCamera,
-	Folder,
-	Presentation
-} from "lucide-react";
+import { AppWindow, Disc, File, FileArchive, FileCode, FileImage, FileMusic, FileSpreadsheet, FileText, FileType, FileVideoCamera, Folder, Presentation } from "../icons/glyphs";
 
 // File extensions grouped by the icon a shelf tile shows while it has no
 // preview (or for files Windows can't preview at all).

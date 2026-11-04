@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "../../../icons/glyphs";
 import type { BlockDataMap } from "../../protocol";
 import type { BlockRenderProps } from "./registry";
 

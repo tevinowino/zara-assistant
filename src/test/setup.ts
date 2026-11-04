@@ -7,6 +7,17 @@ import { resetInvokeHandlers } from "./shims/tauriCore";
 import { resetTauriEvents } from "./shims/tauriEvent";
 import { resetOpenedUrls } from "./shims/pluginOpener";
 
+// Recent Node versions (25 and later) ship their own `localStorage`, which does not work
+// without a storage file and hides the one jsdom provides. Put jsdom's back, so the tests
+// behave the same on every Node version.
+if (typeof globalThis.localStorage?.setItem !== "function") {
+	const jsdomWindow = (globalThis as unknown as { jsdom: { window: Window } }).jsdom.window;
+	Object.defineProperty(globalThis, "localStorage", {
+		configurable: true,
+		value: jsdomWindow.localStorage
+	});
+}
+
 // jsdom lacks these browser APIs that the notch UI and chart libraries touch.
 class ResizeObserverStub {
 	observe(): void {}

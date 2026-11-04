@@ -49,7 +49,7 @@ export function mermaidThemeVariables(ink: string, background: string): Record<s
 	const muted = mixHex(ink, background, 0.55);
 	return {
 		background: "transparent",
-		fontFamily: "Inter, system-ui, sans-serif",
+		fontFamily: "General Sans, system-ui, sans-serif",
 		fontSize: "12px",
 		textColor: ink,
 		primaryColor: tint(blue),

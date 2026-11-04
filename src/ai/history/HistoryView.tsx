@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "../../icons/glyphs";
 import { ChatRow } from "./ChatRow";
 import { groupConversations } from "./groupConversations";
 import { useConversationList } from "./useConversationList";

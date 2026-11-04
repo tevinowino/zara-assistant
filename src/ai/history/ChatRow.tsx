@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2 } from "../../icons/glyphs";
 import { formatRelativeTime } from "./groupConversations";
 
 /** How long a delete button stays armed after the first click. */

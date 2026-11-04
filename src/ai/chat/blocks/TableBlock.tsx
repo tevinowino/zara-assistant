@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown } from "../../../icons/glyphs";
 import type { BlockDataMap } from "../../protocol";
 import type { BlockRenderProps } from "./registry";
 import { tableRowKeys } from "./tableRowKey";

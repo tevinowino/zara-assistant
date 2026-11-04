@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw } from "../icons/glyphs";
 import {
 	AUTO_UPDATE_SETTING,
 	describeUpdateError,

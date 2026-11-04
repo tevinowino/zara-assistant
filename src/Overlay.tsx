@@ -17,6 +17,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { reloadIfMirrorWasStale } from "./hooks/settingsMirror";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { MixerIcon, SpeakerIcon } from "./icons";
+import "./fonts.css";
 import "./Overlay.css";
 import { EdgeSurface } from "./components/EdgeSurface";
 import { initTheme } from "./theme";

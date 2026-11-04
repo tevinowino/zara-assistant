@@ -1,21 +1,4 @@
-import {
-	Palette,
-	Droplet,
-	Contrast,
-	Droplets,
-	Sun,
-	Square,
-	Maximize2,
-	Gem,
-	Lightbulb,
-	Blend,
-	Ruler,
-	Snowflake,
-	Rainbow,
-	Layers,
-	Sparkles,
-	type LucideIcon
-} from "lucide-react";
+import { Palette, Droplet, Contrast, Droplets, Sun, Square, Maximize2, Gem, Lightbulb, Blend, Ruler, Snowflake, Rainbow, Layers, Sparkles, type Glyph } from "../icons/glyphs";
 import { SettingRow } from "./SettingRow";
 import { SettingSlider } from "./SettingSlider";
 import { SettingSwitch } from "./SettingSwitch";
@@ -26,7 +9,7 @@ type GlassSliderKey = Exclude<keyof GlassSettings, "enabled">;
 
 interface GlassSliderSpec {
 	key: GlassSliderKey;
-	icon: LucideIcon;
+	icon: Glyph;
 	label: string;
 	/** Says what the slider does, and shows its current value. */
 	describe: (value: number) => string;

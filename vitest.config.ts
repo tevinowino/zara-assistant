@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import { fileURLToPath } from "node:url";
+import { iconoirAlias } from "./iconoirAlias";
 
 const fromRoot = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
@@ -14,11 +15,12 @@ const fromRoot = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 export default defineConfig({
 	plugins: [react(), svgr()],
 	resolve: {
-		alias: {
-			"@tauri-apps/api/core": fromRoot("./src/test/shims/tauriCore.ts"),
-			"@tauri-apps/api/event": fromRoot("./src/test/shims/tauriEvent.ts"),
-			"@tauri-apps/plugin-opener": fromRoot("./src/test/shims/pluginOpener.ts")
-		}
+		alias: [
+			{ find: "@tauri-apps/api/core", replacement: fromRoot("./src/test/shims/tauriCore.ts") },
+			{ find: "@tauri-apps/api/event", replacement: fromRoot("./src/test/shims/tauriEvent.ts") },
+			{ find: "@tauri-apps/plugin-opener", replacement: fromRoot("./src/test/shims/pluginOpener.ts") },
+			iconoirAlias
+		]
 	},
 	test: {
 		environment: "jsdom",

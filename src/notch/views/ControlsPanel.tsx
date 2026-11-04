@@ -1,23 +1,43 @@
 import type { Dispatch, MouseEvent, SetStateAction } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
-import { VolumeLowIcon } from "../../icons";
-import { NotchSlider } from "../components/NotchSlider";
+import { AppIcon } from "../apps/AppIcon";
+import type { QuickApp } from "../apps/quickApps";
+import { CommandTile } from "../components/CommandTile";
+import { LevelSlider } from "../components/LevelSlider";
 import {
-	BatterySaverIcon,
-	BellIcon,
-	BluetoothIcon,
-	BrightnessLowIcon,
-	MoonIcon,
-	NotchIcon,
-	ReloadIcon,
-	SettingsIcon,
-	TrayIcon,
-	WifiIcon
-} from "../icons/StatusIcons";
+	BellRing,
+	Bluetooth,
+	Moon,
+	PanelTop,
+	RotateCw,
+	Settings,
+	Sun,
+	Volume2,
+	Wifi,
+	Zap,
+	AppWindow
+} from "../../icons/glyphs";
 import type { useQuickSettings } from "../hooks/useQuickSettings";
 import type { ZaraMode } from "../types";
+
+/**
+ * Height of the notch while it shows the command center with no apps pinned, including its
+ * 36px top row: 14px above, the 184px tile grid, a 14px gap, the 40px round buttons and 18px below.
+ */
+export const COMMAND_CENTER_PANEL_HEIGHT_PX = 306;
+/** What the row of pinned apps adds: its 54px tiles and the 14px gap above them. */
+export const COMMAND_CENTER_APPS_ROW_PX = 68;
+/**
+ * The width of the notch while it shows the command center. Inside its 18px padding, the two
+ * 46px sliders and their gaps leave 244px for the four tiles, 117px each.
+ */
+export const COMMAND_CENTER_PANEL_WIDTH_PX = 392;
+
+/** The height of the notch while it shows the command center with `appCount` apps pinned. */
+export function commandCenterPanelHeight(appCount: number): number {
+	return COMMAND_CENTER_PANEL_HEIGHT_PX + (appCount > 0 ? COMMAND_CENTER_APPS_ROW_PX : 0);
+}
 
 export interface ControlsPanelProps {
 	/** Wi-Fi, Bluetooth, battery-saver and brightness state with their toggles. */
@@ -28,6 +48,9 @@ export interface ControlsPanelProps {
 	/** The notch's mode setting, cycled by the Notch Mode tile. */
 	notchMode: string;
 	toggleNotchModeSetting: (event: MouseEvent) => Promise<void>;
+	/** The apps the user pinned, at most four, and how one is opened. */
+	quickApps: readonly QuickApp[];
+	openQuickApp: (app: QuickApp) => void;
 	/** Round action buttons. */
 	openSystemTray: (event: MouseEvent) => Promise<void>;
 	openSettingsWindow: () => Promise<void>;
@@ -46,6 +69,8 @@ export function ControlsPanel({
 	handleVolumeChange,
 	notchMode,
 	toggleNotchModeSetting,
+	quickApps,
+	openQuickApp,
 	openSystemTray,
 	openSettingsWindow,
 	handleWifiRightClick,
@@ -66,6 +91,23 @@ export function ControlsPanel({
 		openBatterySaverSettings,
 		handleBrightnessChange
 	} = quick;
+	const notchModeLabel = notchMode === "fixed" ? "Fixed" : notchMode === "smart" ? "Smart" : "Peek";
+	const bluetoothStatus = !bluetoothEnabled
+		? "Off"
+		: btConnectedNames.length === 1
+			? btConnectedNames[0]
+			: btConnectedNames.length > 1
+				? `${btConnectedNames.length} connected`
+				: "On";
+	const wifiLabel =
+		wifiStatus === null
+			? "…"
+			: !wifiEnabled
+				? "Off"
+				: wifiConnected
+					? (wifiStatus?.ssid ?? "Connected")
+					: "Not connected";
+
 	return (
 		<AnimatePresence>
 			{zaraMode === "command-center" && (
@@ -77,201 +119,149 @@ export function ControlsPanel({
 					exit={{ opacity: 0, filter: "blur(4px)", transition: { duration: 0.1 } }}
 					transition={{ type: "spring", stiffness: 400, damping: 30 }}
 				>
-					{/* Pills Grid */}
-					<div className="cc-pills-grid">
-						{/* Wi-Fi Pill */}
-						<div
-							className={`cc-pill-tile ${wifiEnabled ? "active" : ""}`}
-							onClick={(e) => {
-								e.stopPropagation();
-								toggleWifi();
-							}}
-							onContextMenu={handleWifiRightClick}
-							title="Left-click to toggle, Right-click for networks"
-						>
-							<div className="cc-pill-icon-wrapper">
-								<WifiIcon enabled={wifiEnabled} connected={wifiConnected} />
-							</div>
-							<div className="cc-pill-info">
-								<span className="cc-pill-title">Wi-Fi</span>
-								<span className="cc-pill-status">
-									{wifiStatus === null
-										? "…"
-										: !wifiEnabled
-											? "Off"
-											: wifiConnected
-												? (wifiStatus?.ssid ?? "Connected")
-												: "Not connected"}
-								</span>
-							</div>
-							<button
-								className="cc-pill-more"
-								aria-label="Wi-Fi networks"
-								title="Wi-Fi networks"
-								onClick={(e) => {
-									e.stopPropagation();
-									setZaraMode("wifi");
-								}}
-							>
-								<ChevronRight />
-							</button>
+					<div className="cc-grid">
+						<div className="cc-tiles">
+							<CommandTile
+								icon={<Wifi size={18} style={{ opacity: !wifiEnabled ? 0.4 : wifiConnected ? 1 : 0.7 }} />}
+								title="Wi-Fi"
+								status={wifiLabel}
+								pressed={wifiEnabled}
+								onPress={() => toggleWifi()}
+								onSecondaryPress={handleWifiRightClick}
+								more={{ label: "Wi-Fi networks", onPress: () => setZaraMode("wifi") }}
+								hint="Click to toggle, right-click for networks"
+							/>
+							<CommandTile
+								icon={<Bluetooth size={18} />}
+								title="Bluetooth"
+								status={bluetoothStatus}
+								pressed={bluetoothEnabled}
+								onPress={() => toggleBluetooth()}
+								onSecondaryPress={handleBluetoothRightClick}
+								more={{ label: "Bluetooth devices", onPress: () => setZaraMode("bluetooth") }}
+								hint="Click to toggle, right-click for devices"
+							/>
+							<CommandTile
+								icon={<PanelTop size={18} />}
+								title="Notch"
+								status={notchModeLabel}
+								lit={notchMode === "fixed"}
+								onPress={toggleNotchModeSetting}
+								hint="Cycle notch mode: Fixed, Smart, Peek"
+							/>
+							<CommandTile
+								icon={<Zap size={18} />}
+								title="Energy"
+								label={`Energy Saver, ${batterySaverEnabled ? "On" : "Off"}`}
+								status={batterySaverEnabled ? "Saver On" : "Saver Off"}
+								tone="green"
+								lit={batterySaverEnabled}
+								onPress={() => openBatterySaverSettings()}
+								hint="Open Windows Energy Saver settings"
+							/>
 						</div>
 
-						{/* Bluetooth Pill */}
-						<div
-							className={`cc-pill-tile ${bluetoothEnabled ? "active" : ""}`}
-							onClick={(e) => {
-								e.stopPropagation();
-								toggleBluetooth();
-							}}
-							onContextMenu={handleBluetoothRightClick}
-							title="Left-click to toggle, Right-click for devices"
-						>
-							<div className="cc-pill-icon-wrapper">
-								<BluetoothIcon />
-							</div>
-							<div className="cc-pill-info">
-								<span className="cc-pill-title">Bluetooth</span>
-								<span className="cc-pill-status">
-									{!bluetoothEnabled
-										? "Off"
-										: btConnectedNames.length === 1
-											? btConnectedNames[0]
-											: btConnectedNames.length > 1
-												? `${btConnectedNames.length} connected`
-												: "On"}
-								</span>
-							</div>
-							<button
-								className="cc-pill-more"
-								aria-label="Bluetooth devices"
-								title="Bluetooth devices"
-								onClick={(e) => {
-									e.stopPropagation();
-									setZaraMode("bluetooth");
-								}}
-							>
-								<ChevronRight />
-							</button>
-						</div>
-
-						{/* Notch Mode Pill */}
-						<div
-							className={`cc-pill-tile ${notchMode === "fixed" ? "active" : ""}`}
-							onClick={toggleNotchModeSetting}
-							title="Cycle notch mode: Fixed / Smart / Peek"
-						>
-							<div className="cc-pill-icon-wrapper">
-								<NotchIcon />
-							</div>
-							<div className="cc-pill-info">
-								<span className="cc-pill-title">Notch Mode</span>
-								<span className="cc-pill-status">
-									{notchMode === "fixed" ? "Fixed" : notchMode === "smart" ? "Smart" : "Peek"}
-								</span>
-							</div>
-						</div>
+						<LevelSlider
+							aria-label="Volume"
+							min={0}
+							max={1}
+							step={0.01}
+							value={displayVolume}
+							onChange={handleVolumeChange}
+							icon={<Volume2 size={18} />}
+						/>
+						<LevelSlider
+							aria-label="Brightness"
+							min={0}
+							max={100}
+							step={1}
+							value={currentBrightness}
+							onChange={handleBrightnessChange}
+							icon={<Sun size={18} />}
+						/>
 					</div>
 
-					{/* Circular Actions Row */}
-					<div className="cc-circular-actions-row">
+					{quickApps.length > 0 && (
+						<div className="cc-apps" role="group" aria-label="Your apps">
+							{quickApps.map((app) => (
+								<button
+									key={app.target}
+									type="button"
+									className="cc-app"
+									aria-label={`Open ${app.name}`}
+									title={app.name}
+									onClick={(e) => {
+										e.stopPropagation();
+										openQuickApp(app);
+									}}
+								>
+									<AppIcon app={app} size={32} />
+								</button>
+							))}
+						</div>
+					)}
+
+					<div className="cc-actions">
 						<button
-							className="cc-circular-btn"
+							type="button"
+							className="cc-action"
+							aria-label="Do Not Disturb"
+							title="Do Not Disturb: open Windows notification settings"
 							onClick={(e) => {
 								e.stopPropagation();
 								invoke("open_app", { appName: "ms-settings:notifications" }).catch(console.error);
 							}}
-							title="Do Not Disturb — Open Windows notification settings"
 						>
-							<MoonIcon />
+							<Moon size={20} />
 						</button>
 						<button
-							className={`cc-circular-btn ${batterySaverEnabled ? "active" : ""}`}
-							onClick={(e) => {
-								e.stopPropagation();
-								openBatterySaverSettings();
-							}}
-							title={`Energy Saver: ${batterySaverEnabled ? "On" : "Off"} — Click to open Settings`}
-						>
-							<BatterySaverIcon />
-						</button>
-						<button
-							className="cc-circular-btn"
+							type="button"
+							className="cc-action"
+							aria-label="System tray"
+							title="System tray"
 							onClick={(e) => {
 								e.stopPropagation();
 								openSystemTray(e);
 							}}
-							title="System Tray"
 						>
-							<TrayIcon />
+							<AppWindow size={20} />
 						</button>
 						<button
-							className="cc-circular-btn"
+							type="button"
+							className="cc-action"
+							aria-label="Notification center"
+							title="Notification center"
 							onClick={(e) => {
 								e.stopPropagation();
 								invoke("open_notification_center");
 							}}
-							title="Notification Center"
 						>
-							<BellIcon />
+							<BellRing size={20} />
 						</button>
 						<button
-							className="cc-circular-btn"
+							type="button"
+							className="cc-action"
+							aria-label="Zara settings"
+							title="Zara settings"
 							onClick={(e) => {
 								e.stopPropagation();
 								openSettingsWindow();
 							}}
-							title="Zara Settings"
 						>
-							<SettingsIcon />
+							<Settings size={20} />
 						</button>
 						<button
-							className="cc-circular-btn"
+							type="button"
+							className="cc-action"
+							aria-label="Restart Zara"
+							title="Restart Zara"
 							onClick={(e) => {
 								e.stopPropagation();
 								invoke("restart_zara");
 							}}
-							title="Restart Zara"
 						>
-							<ReloadIcon />
+							<RotateCw size={20} />
 						</button>
-					</div>
-
-					{/* Classic Sliders Area */}
-					<div className="cc-classic-sliders-area">
-						{/* Volume Slider */}
-						<div className="cc-classic-slider-row">
-							<div className="cc-classic-slider-label">
-								<VolumeLowIcon style={{ opacity: 0.5 }} />
-								<span>Volume</span>
-							</div>
-							<NotchSlider
-								aria-label="Volume"
-								min={0}
-								max={1}
-								step={0.01}
-								value={displayVolume}
-								onChange={handleVolumeChange}
-							/>
-							<span className="cc-classic-percentage">{Math.round(displayVolume * 100)}%</span>
-						</div>
-
-						{/* Brightness Slider */}
-						<div className="cc-classic-slider-row">
-							<div className="cc-classic-slider-label">
-								<BrightnessLowIcon />
-								<span>Brightness</span>
-							</div>
-							<NotchSlider
-								aria-label="Brightness"
-								min={0}
-								max={100}
-								step={1}
-								value={currentBrightness}
-								onChange={handleBrightnessChange}
-							/>
-							<span className="cc-classic-percentage">{currentBrightness}%</span>
-						</div>
 					</div>
 				</motion.div>
 			)}

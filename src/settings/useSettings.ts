@@ -7,6 +7,26 @@ import { useSettingsSync } from "../hooks/useSettingsSync";
 import { reloadIfMirrorWasStale } from "../hooks/settingsMirror";
 import { hexToHsl } from "../theme";
 import {
+	addQuickApp,
+	moveQuickApp as moveQuickAppIn,
+	parseQuickApps,
+	QUICK_APPS_SETTING_KEY,
+	removeQuickApp,
+	serializeQuickApps,
+	type QuickApp
+} from "../notch/apps/quickApps";
+import {
+	asNotchPanel,
+	movePanel,
+	NOTCH_PANELS_SETTING_KEY,
+	parsePanelPreferences,
+	readLegacyPanelFlags,
+	serializePanelPreferences,
+	setPanelEnabled,
+	type NotchPanel,
+	type NotchPanelPreferences
+} from "../notch/panels/notchPanels";
+import {
 	GLASS_SETTING_KEY,
 	parseGlassSettings,
 	serializeGlassSettings,
@@ -26,11 +46,11 @@ function readBool(val: string | null): boolean {
 }
 
 /** The notch panels a click can open. */
-export type NotchPanelChoice = "ai" | "calendar" | "command-center" | "devices";
+export type NotchPanelChoice = NotchPanel;
 
 // The assistant is the default panel for anyone who has not chosen another.
 function asPanelChoice(val: unknown): NotchPanelChoice {
-	return val === "calendar" || val === "command-center" || val === "devices" ? val : "ai";
+	return asNotchPanel(val) ?? "ai";
 }
 
 export function useSettings() {
@@ -49,10 +69,17 @@ export function useSettings() {
 	}, []);
 	const [autostart, setAutostart] = useState(false);
 	const [weatherEnabled, setWeatherEnabled] = useState(true);
-	const [aiPanelEnabled, setAiPanelEnabled] = useState(true);
-	const [calendarEnabled, setCalendarEnabled] = useState(true);
-	const [controlsPanelEnabled, setControlsPanelEnabled] = useState(true);
-	const [devicesPanelEnabled, setDevicesPanelEnabled] = useState(false);
+	// The apps pinned to the command center, at most four.
+	const [quickApps, setQuickApps] = useState<readonly QuickApp[]>(() =>
+		parseQuickApps(localStorage.getItem(QUICK_APPS_SETTING_KEY))
+	);
+	// The widgets the notch shows, in the order it cycles through them.
+	const [notchPanels, setNotchPanels] = useState<NotchPanelPreferences>(() =>
+		parsePanelPreferences(
+			localStorage.getItem(NOTCH_PANELS_SETTING_KEY),
+			readLegacyPanelFlags((key) => localStorage.getItem(key))
+		)
+	);
 	const [timerSoundEnabled, setTimerSoundEnabled] = useState(
 		() => localStorage.getItem("zara-timer-sound-enabled") !== "false"
 	);
@@ -159,10 +186,13 @@ export function useSettings() {
 			};
 
 			apply(getVal("zara-weather-enabled"), setWeatherEnabled, readBool);
-			apply(getVal("zara-notch-ai-enabled"), setAiPanelEnabled, readBool);
-			apply(getVal("zara-calendar-enabled"), setCalendarEnabled, readBool);
-			apply(getVal("zara-notch-command-center-enabled"), setControlsPanelEnabled, readBool);
-			apply(getVal("zara-notch-devices-enabled"), setDevicesPanelEnabled, readBool);
+			setQuickApps(parseQuickApps(getVal(QUICK_APPS_SETTING_KEY)));
+			setNotchPanels(
+				parsePanelPreferences(
+					getVal(NOTCH_PANELS_SETTING_KEY),
+					readLegacyPanelFlags((key) => getVal(key))
+				)
+			);
 			apply(getVal("zara-timer-sound-enabled"), setTimerSoundEnabled, readBool);
 			apply(getVal("zara-music-mode-enabled"), setMusicModeEnabled, readBool);
 			apply(
@@ -311,10 +341,8 @@ export function useSettings() {
 		"zara-notch-mode": setNotchMode,
 		"zara-notch-edge-delay": setNotchEdgeDelay,
 		"zara-weather-enabled": setWeatherEnabled,
-		"zara-calendar-enabled": setCalendarEnabled,
-		"zara-notch-command-center-enabled": setControlsPanelEnabled,
-		"zara-notch-devices-enabled": setDevicesPanelEnabled,
-		"zara-notch-ai-enabled": setAiPanelEnabled,
+		[NOTCH_PANELS_SETTING_KEY]: (value: unknown) => setNotchPanels(parsePanelPreferences(value)),
+		[QUICK_APPS_SETTING_KEY]: (value: unknown) => setQuickApps(parseQuickApps(value)),
 		"zara-timer-sound-enabled": setTimerSoundEnabled,
 		"zara-music-mode-enabled": setMusicModeEnabled,
 		"zara-notch-remember-panel": setNotchRememberPanel,
@@ -417,40 +445,31 @@ export function useSettings() {
 		saveSetting("zara-weather-enabled", String(next));
 	};
 
-	// The notch needs at least one panel, so the last one on can't be turned off.
-	const enabledPanelCount =
-		Number(aiPanelEnabled) +
-		Number(calendarEnabled) +
-		Number(controlsPanelEnabled) +
-		Number(devicesPanelEnabled);
-
-	const toggleAiPanel = () => {
-		const next = !aiPanelEnabled;
-		if (!next && enabledPanelCount <= 1) return;
-		setAiPanelEnabled(next);
-		saveSetting("zara-notch-ai-enabled", String(next));
+	const saveQuickApps = (next: readonly QuickApp[]) => {
+		if (next === quickApps) return;
+		setQuickApps(next);
+		saveSetting(QUICK_APPS_SETTING_KEY, serializeQuickApps(next));
 	};
 
-	const toggleCalendar = () => {
-		const next = !calendarEnabled;
-		if (!next && enabledPanelCount <= 1) return;
-		setCalendarEnabled(next);
-		saveSetting("zara-calendar-enabled", String(next));
+	/** Pins an app to the command center. Nothing happens if it is pinned or four are. */
+	const pinQuickApp = (app: QuickApp) => saveQuickApps(addQuickApp(quickApps, app));
+	const unpinQuickApp = (target: string) => saveQuickApps(removeQuickApp(quickApps, target));
+	const moveQuickApp = (target: string, direction: -1 | 1) =>
+		saveQuickApps(moveQuickAppIn(quickApps, target, direction));
+
+	const saveNotchPanels = (next: NotchPanelPreferences) => {
+		if (next === notchPanels) return;
+		setNotchPanels(next);
+		saveSetting(NOTCH_PANELS_SETTING_KEY, serializePanelPreferences(next));
 	};
 
-	const toggleControlsPanel = () => {
-		const next = !controlsPanelEnabled;
-		if (!next && enabledPanelCount <= 1) return;
-		setControlsPanelEnabled(next);
-		saveSetting("zara-notch-command-center-enabled", String(next));
-	};
+	/** Turns a widget on or off. The last one on stays on, so the notch always has something to open. */
+	const setNotchPanelEnabled = (panel: NotchPanel, enabled: boolean) =>
+		saveNotchPanels(setPanelEnabled(notchPanels, panel, enabled));
 
-	const toggleDevicesPanel = () => {
-		const next = !devicesPanelEnabled;
-		if (!next && enabledPanelCount <= 1) return;
-		setDevicesPanelEnabled(next);
-		saveSetting("zara-notch-devices-enabled", String(next));
-	};
+	/** Moves a widget one place earlier (-1) or later (1) in the order the notch cycles through them. */
+	const moveNotchPanel = (panel: NotchPanel, direction: -1 | 1) =>
+		saveNotchPanels(movePanel(notchPanels, panel, direction));
 
 	const toggleTimerSound = () => {
 		const next = !timerSoundEnabled;
@@ -770,15 +789,13 @@ export function useSettings() {
 		setNotchModeValue,
 		notchEdgeDelay,
 		handleNotchEdgeDelayChange,
-		calendarEnabled,
-		toggleCalendar,
-		controlsPanelEnabled,
-		toggleControlsPanel,
-		devicesPanelEnabled,
-		toggleDevicesPanel,
-		aiPanelEnabled,
-		toggleAiPanel,
-		enabledPanelCount,
+		notchPanels,
+		setNotchPanelEnabled,
+		moveNotchPanel,
+		quickApps,
+		pinQuickApp,
+		unpinQuickApp,
+		moveQuickApp,
 		timerSoundEnabled,
 		toggleTimerSound,
 		musicModeEnabled,

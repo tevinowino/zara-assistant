@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Brain, Download, MessageSquare, NotebookPen, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Brain, Download, MessageSquare, NotebookPen, Plus, Trash2 } from "../icons/glyphs";
 import { emit, listen } from "@tauri-apps/api/event";
 import {
 	convDelete,

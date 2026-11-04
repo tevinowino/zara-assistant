@@ -4,8 +4,11 @@ Copyright (C) 2026 Tevin Owino
 Zara is free software licensed under the GNU General Public License, version 3
 only (see LICENSE).
 
-The Syne font is included under the SIL Open Font License; see
-src/assets/fonts/Syne-OFL.txt.
+The Manrope font (SIL Open Font License 1.1, from @fontsource-variable/manrope) and the
+General Sans font (Indian Type Foundry Free Font License, https://www.fontshare.com) are
+used for text; see src/assets/fonts/FONTS.md.
+
+The interface icons are from Iconoir (MIT License, https://github.com/iconoir-icons/iconoir).
 
 The AI provider marks in src/assets/providers are from @lobehub/icons-static-svg
 (MIT License, https://github.com/lobehub/lobe-icons). The marks themselves are

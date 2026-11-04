@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { EyeOff, Globe, ShieldCheck } from "lucide-react";
+import { EyeOff, Globe, ShieldCheck } from "../icons/glyphs";
 import { invoke } from "@tauri-apps/api/core";
-import { stealthSet, stealthStatus, stealthVerify, type StealthStatus } from "../ai/api";
+import type { StealthStatus } from "../ai/api";
+import { useStealth } from "../stealth/useStealth";
 import type { ProviderInfo } from "../ai/providers";
 import { AiServiceSection } from "./AiServiceSection";
 import { SettingRow } from "./SettingRow";
@@ -33,8 +34,12 @@ export function describeStealth(status: StealthStatus | null): Notice | null {
 const WEB_SEARCH_SETTING = "zara-ai-web-search";
 
 export function AssistantTab() {
-	const [stealth, setStealth] = useState<StealthStatus | null>(null);
-	const [stealthBusy, setStealthBusy] = useState(false);
+	const {
+		status: stealth,
+		busy: stealthBusy,
+		toggle: toggleStealth,
+		verify: verifyStealth
+	} = useStealth();
 	// Web search is on unless the user turned it off, including when nothing is saved yet.
 	const [webSearch, setWebSearch] = useState(true);
 	// The AI service in use, once known: not every service can search the web.
@@ -46,9 +51,6 @@ export function AssistantTab() {
 			.catch(() => {
 				// Unreadable settings mean the default: on.
 			});
-		stealthStatus()
-			.then(setStealth)
-			.catch(() => setStealth(null));
 	}, []);
 
 	const toggleWebSearch = async () => {
@@ -58,27 +60,6 @@ export function AssistantTab() {
 			await invoke<void>("save_setting", { key: WEB_SEARCH_SETTING, value: String(next) });
 		} catch {
 			setWebSearch(!next);
-		}
-	};
-
-	const toggleStealth = async () => {
-		if (!stealth || stealthBusy) return;
-		setStealthBusy(true);
-		try {
-			setStealth(await stealthSet(!stealth.requested));
-		} catch {
-			setStealth(await stealthStatus().catch(() => stealth));
-		} finally {
-			setStealthBusy(false);
-		}
-	};
-
-	const verifyStealth = async () => {
-		setStealthBusy(true);
-		try {
-			setStealth(await stealthVerify());
-		} finally {
-			setStealthBusy(false);
 		}
 	};
 

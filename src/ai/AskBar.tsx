@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "../icons/glyphs";
 import "./AskBar.css";
 
 /**

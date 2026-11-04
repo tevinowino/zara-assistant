@@ -1,4 +1,4 @@
-import { Power, Clock, BatteryWarning, RefreshCw, RotateCcw, LogOut } from "lucide-react";
+import { Power, Clock, BatteryWarning, RefreshCw, RotateCcw, LogOut } from "../icons/glyphs";
 import { SettingRow } from "./SettingRow";
 import { SettingSlider } from "./SettingSlider";
 import { SettingSwitch } from "./SettingSwitch";

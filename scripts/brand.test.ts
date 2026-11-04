@@ -45,7 +45,9 @@ describe("branding", () => {
 
 		expect(notice).toContain("Copyright (C) 2026 Tevin Owino");
 		expect(notice).toContain("GNU General Public License");
-		expect(notice).toContain("Syne");
+		expect(notice).toContain("Manrope");
+		expect(notice).toContain("General Sans");
+		expect(notice).toContain("Iconoir");
 		expect(notice).toContain("lobehub");
 	});
 });

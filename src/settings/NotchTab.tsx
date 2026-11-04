@@ -1,19 +1,4 @@
-import {
-	PanelTop,
-	Calendar,
-	BellRing,
-	Music,
-	Minimize2,
-	LayoutList,
-	Sparkles,
-	Circle,
-	CloudSun,
-	Timer,
-	Archive,
-	Headphones,
-	SlidersHorizontal,
-	X
-} from "lucide-react";
+import { PanelTop, BellRing, Music, Minimize2, LayoutList, Sparkles, Circle, CloudSun, Timer, Archive, X } from "../icons/glyphs";
 import { SegmentedControl } from "glisse";
 import { SettingRow } from "./SettingRow";
 import { SettingSlider } from "./SettingSlider";
@@ -21,29 +6,28 @@ import { SettingSwitch } from "./SettingSwitch";
 import { StatusWidgetConfig } from "../components/StatusWidgetConfig";
 import type { WidgetConfig } from "./types";
 import type { NotchPanelChoice } from "./useSettings";
-
-/** The notch's panels, in the order the notch cycles through them. */
-const PANEL_CHOICES: readonly (readonly [NotchPanelChoice, string])[] = [
-	["ai", "Zara assistant"],
-	["calendar", "Calendar"],
-	["command-center", "Command Center"],
-	["devices", "Connected devices"]
-];
+import { WidgetPicker } from "./WidgetPicker";
+import { QuickAppsSection } from "./QuickAppsSection";
+import type { QuickApp } from "../notch/apps/quickApps";
+import {
+	isPanelEnabled,
+	notchPanelDefinition,
+	type NotchPanel,
+	type NotchPanelPreferences
+} from "../notch/panels/notchPanels";
 
 interface NotchTabProps {
 	notchMode: string;
 	setNotchModeValue: (mode: string) => void;
 	notchEdgeDelay: number;
 	handleNotchEdgeDelayChange: (val: number) => void;
-	calendarEnabled: boolean;
-	toggleCalendar: () => void;
-	controlsPanelEnabled: boolean;
-	toggleControlsPanel: () => void;
-	devicesPanelEnabled: boolean;
-	toggleDevicesPanel: () => void;
-	aiPanelEnabled: boolean;
-	toggleAiPanel: () => void;
-	enabledPanelCount: number;
+	notchPanels: NotchPanelPreferences;
+	setNotchPanelEnabled: (panel: NotchPanel, enabled: boolean) => void;
+	moveNotchPanel: (panel: NotchPanel, direction: -1 | 1) => void;
+	quickApps: readonly QuickApp[];
+	pinQuickApp: (app: QuickApp) => void;
+	unpinQuickApp: (target: string) => void;
+	moveQuickApp: (target: string, direction: -1 | 1) => void;
 	notchRememberPanel: boolean;
 	toggleNotchRememberPanel: () => void;
 	notchDefaultPanel: NotchPanelChoice;
@@ -87,15 +71,13 @@ export function NotchTab({
 	setNotchModeValue,
 	notchEdgeDelay,
 	handleNotchEdgeDelayChange,
-	calendarEnabled,
-	toggleCalendar,
-	controlsPanelEnabled,
-	toggleControlsPanel,
-	devicesPanelEnabled,
-	toggleDevicesPanel,
-	aiPanelEnabled,
-	toggleAiPanel,
-	enabledPanelCount,
+	notchPanels,
+	setNotchPanelEnabled,
+	moveNotchPanel,
+	quickApps,
+	pinQuickApp,
+	unpinQuickApp,
+	moveQuickApp,
 	notchRememberPanel,
 	toggleNotchRememberPanel,
 	notchDefaultPanel,
@@ -128,17 +110,11 @@ export function NotchTab({
 	statusWidgets,
 	handleWidgetsChange
 }: NotchTabProps) {
-	const panelOn: Record<NotchPanelChoice, boolean> = {
-		ai: aiPanelEnabled,
-		calendar: calendarEnabled,
-		"command-center": controlsPanelEnabled,
-		devices: devicesPanelEnabled
-	};
-	const firstPanelOn = PANEL_CHOICES.find(([panel]) => panelOn[panel])?.[0] ?? "command-center";
-	// The notch needs at least one panel, so the last one on stays on.
-	const isLastPanel = (on: boolean) => on && enabledPanelCount <= 1;
-	const lastPanelTitle = (on: boolean) =>
-		isLastPanel(on) ? "The notch needs at least one panel" : undefined;
+	const calendarEnabled = isPanelEnabled(notchPanels, "calendar");
+	// The default can only be a widget that is on; if it was turned off, the first one on.
+	const defaultChoice = isPanelEnabled(notchPanels, notchDefaultPanel)
+		? notchDefaultPanel
+		: notchPanels.enabled[0];
 
 	return (
 		<>
@@ -177,30 +153,28 @@ export function NotchTab({
 				)}
 			</div>
 
-			<div className="setting-group-label">Panels</div>
+			<div className="setting-group-label">Widgets</div>
+			<WidgetPicker
+				preferences={notchPanels}
+				onToggle={setNotchPanelEnabled}
+				onMove={moveNotchPanel}
+			/>
+
+			<div className="setting-group-label">Command Center apps</div>
+			<QuickAppsSection
+				apps={quickApps}
+				onAdd={pinQuickApp}
+				onRemove={unpinQuickApp}
+				onMove={moveQuickApp}
+			/>
+			{!isPanelEnabled(notchPanels, "command-center") && (
+				<p className="settings-note">
+					These appear in the Command Center widget, which is turned off above.
+				</p>
+			)}
+
+			<div className="setting-group-label">Opening</div>
 			<div className="setting-group">
-				<SettingRow
-					icon={Sparkles}
-					label="Zara Assistant"
-					desc="Ask questions and get answers in the notch"
-				>
-					<SettingSwitch
-						checked={aiPanelEnabled}
-						onToggle={toggleAiPanel}
-						disabled={isLastPanel(aiPanelEnabled)}
-						title={lastPanelTitle(aiPanelEnabled)}
-					/>
-				</SettingRow>
-
-				<SettingRow icon={Calendar} label="Calendar & Timer" desc="Enable productivity split-view">
-					<SettingSwitch
-						checked={calendarEnabled}
-						onToggle={toggleCalendar}
-						disabled={isLastPanel(calendarEnabled)}
-						title={lastPanelTitle(calendarEnabled)}
-					/>
-				</SettingRow>
-
 				{calendarEnabled && (
 					<SettingRow
 						icon={BellRing}
@@ -212,35 +186,9 @@ export function NotchTab({
 				)}
 
 				<SettingRow
-					icon={SlidersHorizontal}
-					label="Command Center"
-					desc="Quick toggles, Wi-Fi and Bluetooth"
-				>
-					<SettingSwitch
-						checked={controlsPanelEnabled}
-						onToggle={toggleControlsPanel}
-						disabled={isLastPanel(controlsPanelEnabled)}
-						title={lastPanelTitle(controlsPanelEnabled)}
-					/>
-				</SettingRow>
-
-				<SettingRow
-					icon={Headphones}
-					label="Connected Devices"
-					desc="Batteries and audio of your connected devices"
-				>
-					<SettingSwitch
-						checked={devicesPanelEnabled}
-						onToggle={toggleDevicesPanel}
-						disabled={isLastPanel(devicesPanelEnabled)}
-						title={lastPanelTitle(devicesPanelEnabled)}
-					/>
-				</SettingRow>
-
-				<SettingRow
 					icon={PanelTop}
-					label="Remember Last Panel"
-					desc="Reopen the panel you last used; turn off to choose a fixed default"
+					label="Remember Last Widget"
+					desc="Reopen the widget you last used; turn off to choose a fixed default"
 				>
 					<SettingSwitch checked={notchRememberPanel} onToggle={toggleNotchRememberPanel} />
 				</SettingRow>
@@ -248,17 +196,18 @@ export function NotchTab({
 				{!notchRememberPanel && (
 					<SettingRow
 						icon={PanelTop}
-						label="Default Panel"
-						desc="Open this panel when you click the notch"
+						label="Default Widget"
+						desc="Open this widget when you click the notch"
+						divider={false}
 					>
 						<select
 							className="settings-select"
-							value={panelOn[notchDefaultPanel] ? notchDefaultPanel : firstPanelOn}
+							value={defaultChoice}
 							onChange={(e) => changeNotchDefaultPanel(e.target.value as NotchPanelChoice)}
 						>
-							{PANEL_CHOICES.map(([panel, label]) => (
-								<option key={panel} value={panel} disabled={!panelOn[panel]}>
-									{label}
+							{notchPanels.enabled.map((panel) => (
+								<option key={panel} value={panel}>
+									{notchPanelDefinition(panel).label}
 								</option>
 							))}
 						</select>

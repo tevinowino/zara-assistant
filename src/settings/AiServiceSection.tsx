@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { ArrowRightLeft, KeyRound, Layers, LifeBuoy, RotateCw, Server } from "lucide-react";
+import { ArrowRightLeft, KeyRound, Layers, LifeBuoy, RotateCw, Server } from "../icons/glyphs";
 import {
 	aiClearApiKey,
 	aiGetSettings,

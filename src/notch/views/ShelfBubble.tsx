@@ -1,6 +1,6 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Inbox } from "lucide-react";
+import { Inbox } from "../../icons/glyphs";
 import type { NotchPanel, ShelfItem } from "../types";
 
 export interface ShelfBubbleProps {

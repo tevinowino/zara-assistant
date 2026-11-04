@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Zap } from "../../icons/glyphs";
 import type { BudLevel, BudsBattery } from "../../devices/connectedDevices";
 
 /** A small ring showing a device's battery, with the level in the middle. */

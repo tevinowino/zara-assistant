@@ -1,19 +1,7 @@
 import { useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import type { z } from "zod";
-import {
-	AlertTriangle,
-	Calendar,
-	Check,
-	Clock,
-	Copy,
-	Info,
-	Link,
-	Mail,
-	Star,
-	StickyNote,
-	Timer
-} from "lucide-react";
+import { AlertTriangle, Calendar, Check, Clock, Copy, Info, Link, Mail, Star, StickyNote, Timer } from "../../icons/glyphs";
 import { BLOCK_CONTRACTS } from "../protocol";
 import { BLOCK_REGISTRY, type BlockRenderProps } from "../chat/blocks/registry";
 import { BlockErrorBoundary } from "../chat/blocks/BlockErrorBoundary";

@@ -1,0 +1,49 @@
+/* ============================================================================
+   Zara's type pairing, loaded once by every window.
+
+   - Manrope (SIL OFL 1.1, from the @fontsource-variable/manrope package): headings, titles
+     and the large numerals (the clock, the temperature). Variable, weights 200-800.
+   - General Sans (Indian Type Foundry, free for commercial use): everything else, as
+     400, 500, 600 and 700. Bundled in assets/fonts so the app never needs the network.
+
+   Use the tokens, not the family names: var(--font-body) for text, var(--font-display)
+   for headings and big numerals. Both fall back to the system UI font if a file fails.
+   ============================================================================ */
+@import "@fontsource-variable/manrope/wght.css";
+
+@font-face {
+	font-family: "General Sans";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("./assets/fonts/general-sans-400.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "General Sans";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("./assets/fonts/general-sans-500.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "General Sans";
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url("./assets/fonts/general-sans-600.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "General Sans";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("./assets/fonts/general-sans-700.woff2") format("woff2");
+}
+
+:root {
+	--font-body: "General Sans", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+	--font-display: "Manrope Variable", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+}

@@ -18,19 +18,8 @@ import {
 	arrayMove
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-	CloudSun,
-	BatteryFull,
-	Cpu,
-	MemoryStick,
-	HardDrive,
-	ArrowUpDown,
-	X,
-	ArrowLeftRight,
-	ChevronUp,
-	ChevronDown
-} from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
+import { CloudSun, BatteryFull, Cpu, MemoryStick, HardDrive, ArrowUpDown, X, ArrowLeftRight, ChevronUp, ChevronDown } from "../icons/glyphs";
+import type { Glyph } from "../icons/glyphs";
 
 export interface WidgetConfig {
 	left: string[];
@@ -40,7 +29,7 @@ export interface WidgetConfig {
 interface WidgetDef {
 	id: string;
 	label: string;
-	icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number; strokeWidth?: number }>;
+	icon: Glyph;
 	color: string;
 }
 

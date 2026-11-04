@@ -12,7 +12,6 @@ webview's allowed hosts in line with this list.
 | `api.open-meteo.com` | Weather widget | Latitude and longitude | Free service, no key |
 | `geocoding-api.open-meteo.com` | Looking up a city name | The city text you type | |
 | `ipapi.co`, `ip-api.com` | Finding your approximate location for weather | Your IP address (implicitly) | Phase 9 makes this opt-in |
-| `fonts.googleapis.com`, `fonts.gstatic.com` | Web fonts | Standard font requests | Candidate to self-host |
 
 ## From the Rust backend (not subject to the webview policy)
 

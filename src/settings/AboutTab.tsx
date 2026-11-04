@@ -1,4 +1,4 @@
-import { FileDown, Upload } from "lucide-react";
+import { FileDown, Upload } from "../icons/glyphs";
 import { SettingRow } from "./SettingRow";
 import { UpdatesSection } from "./UpdatesSection";
 

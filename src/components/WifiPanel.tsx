@@ -1,17 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import {
-	ChevronLeft,
-	LoaderCircle,
-	Lock,
-	MapPin,
-	RefreshCw,
-	Wifi,
-	WifiHigh,
-	WifiLow,
-	WifiZero
-} from "lucide-react";
+import { ChevronLeft, LoaderCircle, Lock, MapPin, RefreshCw, Wifi, WifiHigh, WifiLow, WifiZero } from "../icons/glyphs";
 import "./QuickPanel.css";
 
 interface WifiNetwork {

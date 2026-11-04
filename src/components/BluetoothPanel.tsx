@@ -1,19 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import {
-	Bluetooth,
-	ChevronLeft,
-	Gamepad2,
-	Headphones,
-	Keyboard,
-	Laptop,
-	LoaderCircle,
-	Mouse,
-	Plus,
-	Smartphone,
-	Watch
-} from "lucide-react";
+import { Bluetooth, ChevronLeft, Gamepad2, Headphones, Keyboard, Laptop, LoaderCircle, Mouse, Plus, Smartphone, Watch } from "../icons/glyphs";
 import { deviceArtFor } from "../devices/deviceArtFor";
 import { DEVICE_LOOKS, deviceLookFor, setDeviceLook } from "../devices/deviceLooks";
 import "./QuickPanel.css";

@@ -4,8 +4,10 @@ mod ai;
 mod battery;
 mod bluetooth;
 mod buds;
+mod clipboard_history;
 mod commands;
 mod diagnostics;
+mod installed_apps;
 mod jack;
 mod services;
 mod settings_window;
@@ -214,7 +216,12 @@ fn main() {
             ai::note_add,
             ai::note_update,
             ai::note_delete,
-            stall_probe::record_diagnostic
+            stall_probe::record_diagnostic,
+            clipboard_history::clipboard_history_enable,
+            clipboard_history::clipboard_history_list,
+            clipboard_history::clipboard_history_remove,
+            clipboard_history::clipboard_history_clear,
+            installed_apps::apps_list_installed
         ])
         .setup(|app| {
             // Populate the settings cache before anything else: a webview can

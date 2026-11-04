@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from "react";
-import { ChevronRight, SlidersHorizontal, Zap } from "lucide-react";
+import { ChevronRight, SlidersHorizontal, Zap } from "../icons/glyphs";
 import { aiGetModelControls, aiSetModelTuning, toAiError } from "../ai/api";
 import type { ControlInfo, ProviderId, TuningValue, TuningValues } from "../ai/providers";
 import { fastSettings, isFast, withFast } from "../ai/lib/fastPreset";

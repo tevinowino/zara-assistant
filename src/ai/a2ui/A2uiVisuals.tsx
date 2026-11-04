@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Circle, Info, Lightbulb, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Info, Lightbulb, XCircle } from "../../icons/glyphs";
 import { ACCENT_HEX, type AccentName } from "../protocol/accent";
 
 // The coloured display components of a surface: badge, callout, progress bar,

@@ -1,4 +1,4 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "../../../icons/glyphs";
 import { LazyCodeHighlight } from "../ChatCodeBlock";
 
 interface BlockFallbackProps {

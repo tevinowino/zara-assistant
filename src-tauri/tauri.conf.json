@@ -37,8 +37,10 @@
         "create": false,
         "title": "Settings",
         "url": "settings.html",
-        "width": 740,
-        "height": 560,
+        "width": 900,
+        "height": 640,
+        "minWidth": 640,
+        "minHeight": 480,
         "decorations": false,
         "transparent": true,
         "resizable": true,
@@ -76,7 +78,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ipc: http://ipc.localhost https://api.open-meteo.com https://geocoding-api.open-meteo.com https://ipapi.co http://ip-api.com"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://api.open-meteo.com https://geocoding-api.open-meteo.com https://ipapi.co http://ip-api.com"
     }
   },
   "bundle": {

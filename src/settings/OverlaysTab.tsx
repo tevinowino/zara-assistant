@@ -1,4 +1,4 @@
-import { Volume2, Sun, ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import { Volume2, Sun, ArrowLeftToLine, ArrowRightToLine } from "../icons/glyphs";
 import { SettingRow } from "./SettingRow";
 import { SettingSwitch } from "./SettingSwitch";
 

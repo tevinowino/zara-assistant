@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
-import { Check, ChevronDown, ChevronRight, Search, Zap } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Search, Zap } from "../icons/glyphs";
 import {
 	aiGetModelControls,
 	aiGetSettings,

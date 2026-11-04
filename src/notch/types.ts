@@ -12,10 +12,7 @@ import type { UsbIdentity } from "../devices/usbArtFor";
  *   Dragging files onto the notch also opens the shelf. Wheel/swipe switches
  *   between tool panels, including when a live activity occupies the pill.
  */
-export type NotchPanel = "ai" | "calendar" | "command-center" | "devices";
-export const NOTCH_PANELS: readonly NotchPanel[] = ["ai", "calendar", "command-center", "devices"];
-export const asNotchPanel = (value: unknown): NotchPanel | null =>
-	NOTCH_PANELS.includes(value as NotchPanel) ? (value as NotchPanel) : null;
+export { NOTCH_PANELS, asNotchPanel, type NotchPanel } from "./panels/notchPanels";
 
 export interface MediaInfo {
 	title: string;
@@ -63,6 +60,9 @@ export type ZaraMode =
 	| "bluetooth"
 	| "devices"
 	| "ai"
+	| "notes"
+	| "clipboard"
+	| "weather"
 	| "device";
 
 // A device that just connected or disconnected, shown briefly in the pill.

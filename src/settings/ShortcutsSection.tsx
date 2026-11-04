@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Keyboard, RotateCcw } from "lucide-react";
+import { Keyboard, RotateCcw } from "../icons/glyphs";
 import { shortcutList, shortcutReset, shortcutSet, toAiError, type ShortcutRow } from "../ai/api";
 import { acceleratorParts, keyboardEventToAccelerator } from "../ai/lib/accelerator";
 import { SettingRow } from "./SettingRow";

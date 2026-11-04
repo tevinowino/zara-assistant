@@ -1,6 +1,6 @@
 import { useEffect, useRef, type KeyboardEvent, type WheelEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "../../icons/glyphs";
 import { isSameDay, weekdayInitials } from "../calendar/calendarMonth";
 import { useMonthNavigation } from "../calendar/useMonthNavigation";
 

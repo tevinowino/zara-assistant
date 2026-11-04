@@ -1,4 +1,4 @@
-import type { ComponentType, SVGProps } from "react";
+import type { Glyph } from "../icons/glyphs";
 
 export interface WidgetConfig {
 	left: string[];
@@ -15,7 +15,7 @@ export type SettingsTab =
 	| "about";
 
 export interface SettingRowProps {
-	icon: ComponentType<SVGProps<SVGSVGElement> & { size?: number; strokeWidth?: number }>;
+	icon: Glyph;
 	label: string;
 	desc?: string;
 	action?: boolean;

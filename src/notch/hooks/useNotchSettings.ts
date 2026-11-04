@@ -5,6 +5,14 @@ import type { WidgetConfig } from "../../components/StatusWidgetConfig";
 import { useSettingsSync } from "../../hooks/useSettingsSync";
 import { reloadIfMirrorWasStale } from "../../hooks/settingsMirror";
 import { asNotchPanel, type NotchPanel } from "../types";
+import { parseQuickApps, QUICK_APPS_SETTING_KEY, type QuickApp } from "../apps/quickApps";
+import {
+	isPanelEnabled,
+	NOTCH_PANELS_SETTING_KEY,
+	parsePanelPreferences,
+	readLegacyPanelFlags,
+	type NotchPanelPreferences
+} from "../panels/notchPanels";
 
 export interface UseNotchSettingsOptions {
 	/** The window this notch runs in ("main" for the notch itself); empty until known. */
@@ -43,20 +51,17 @@ export function useNotchSettings({ windowLabel }: UseNotchSettingsOptions) {
 	const [settingsWeatherEnabled, setSettingsWeatherEnabled] = useState(
 		() => localStorage.getItem("zara-weather-enabled") !== "false"
 	);
-	const [settingsCalendarEnabled, setSettingsCalendarEnabled] = useState(
-		() => localStorage.getItem("zara-calendar-enabled") !== "false"
+	// The apps pinned to the command center, at most four.
+	const [quickApps, setQuickApps] = useState<readonly QuickApp[]>(() =>
+		parseQuickApps(localStorage.getItem(QUICK_APPS_SETTING_KEY))
 	);
-	// Which panels the notch shows. Calendar and Controls are on by default;
-	// Connected devices (and panels added later) are opt-in.
-	const [settingsControlsPanelEnabled, setSettingsControlsPanelEnabled] = useState(
-		() => localStorage.getItem("zara-notch-command-center-enabled") !== "false"
-	);
-	const [settingsAiPanelEnabled, setSettingsAiPanelEnabled] = useState(
-		() => localStorage.getItem("zara-notch-ai-enabled") !== "false"
-	);
-
-	const [settingsDevicesPanelEnabled, setSettingsDevicesPanelEnabled] = useState(
-		() => localStorage.getItem("zara-notch-devices-enabled") === "true"
+	// Which widgets the notch shows, in the order it cycles through them. Until the user
+	// has chosen, the old one-setting-per-panel flags decide (see notchPanels.ts).
+	const [panelPreferences, setPanelPreferences] = useState<NotchPanelPreferences>(() =>
+		parsePanelPreferences(
+			localStorage.getItem(NOTCH_PANELS_SETTING_KEY),
+			readLegacyPanelFlags((key) => localStorage.getItem(key))
+		)
 	);
 
 	const [settingsTimerSoundEnabled, setSettingsTimerSoundEnabled] = useState(
@@ -122,12 +127,13 @@ export function useNotchSettings({ windowLabel }: UseNotchSettingsOptions) {
 				};
 
 				setSettingsWeatherEnabled(getVal("zara-weather-enabled", "true") !== "false");
-				setSettingsCalendarEnabled(getVal("zara-calendar-enabled", "true") !== "false");
-				setSettingsControlsPanelEnabled(
-					getVal("zara-notch-command-center-enabled", "true") !== "false"
+				setQuickApps(parseQuickApps(getVal(QUICK_APPS_SETTING_KEY)));
+				setPanelPreferences(
+					parsePanelPreferences(
+						getVal(NOTCH_PANELS_SETTING_KEY),
+						readLegacyPanelFlags((key) => getVal(key))
+					)
 				);
-				setSettingsDevicesPanelEnabled(getVal("zara-notch-devices-enabled", "false") === "true");
-				setSettingsAiPanelEnabled(getVal("zara-notch-ai-enabled", "true") !== "false");
 				setSettingsTimerSoundEnabled(getVal("zara-timer-sound-enabled", "true") !== "false");
 				setSettingsMusicModeEnabled(getVal("zara-music-mode-enabled", "true") !== "false");
 				setRememberPanelEnabled(
@@ -208,10 +214,9 @@ export function useNotchSettings({ windowLabel }: UseNotchSettingsOptions) {
 	useSettingsSync(
 		{
 			"zara-weather-enabled": setSettingsWeatherEnabled,
-			"zara-calendar-enabled": setSettingsCalendarEnabled,
-			"zara-notch-command-center-enabled": setSettingsControlsPanelEnabled,
-			"zara-notch-devices-enabled": setSettingsDevicesPanelEnabled,
-			"zara-notch-ai-enabled": setSettingsAiPanelEnabled,
+			[QUICK_APPS_SETTING_KEY]: (value: unknown) => setQuickApps(parseQuickApps(value)),
+			[NOTCH_PANELS_SETTING_KEY]: (value: unknown) =>
+				setPanelPreferences(parsePanelPreferences(value)),
 			"zara-timer-sound-enabled": setSettingsTimerSoundEnabled,
 			"zara-music-mode-enabled": setSettingsMusicModeEnabled,
 			"zara-notch-remember-panel": setRememberPanelEnabled,
@@ -242,9 +247,16 @@ export function useNotchSettings({ windowLabel }: UseNotchSettingsOptions) {
 		[windowLabel]
 	);
 
+	const settingsCalendarEnabled = isPanelEnabled(panelPreferences, "calendar");
+	const settingsDevicesPanelEnabled = isPanelEnabled(panelPreferences, "devices");
+
 	return {
 		scale,
 		timeFormat24h,
+		/** The widgets that are on, in the order the notch cycles through them. */
+		panelPreferences,
+		/** The apps pinned to the command center. */
+		quickApps,
 		notchMode,
 		setNotchMode,
 		statusWidgets,
@@ -252,8 +264,6 @@ export function useNotchSettings({ windowLabel }: UseNotchSettingsOptions) {
 		waitForStartupSplash,
 		settingsWeatherEnabled,
 		settingsCalendarEnabled,
-		settingsControlsPanelEnabled,
-		settingsAiPanelEnabled,
 		settingsDevicesPanelEnabled,
 		settingsTimerSoundEnabled,
 		settingsMusicModeEnabled,

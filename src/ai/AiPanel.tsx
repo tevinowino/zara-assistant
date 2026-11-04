@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState
 } from "react";
-import { ArrowUp, ChevronDown, History, Plus, Square, X } from "lucide-react";
+import { ArrowUp, ChevronDown, History, Plus, Square, VenetianMask, X } from "../icons/glyphs";
 import {
 	aiGetSettings,
 	aiHasApiKey,
@@ -27,6 +27,7 @@ import { AI_PANEL_HEIGHT, NOTCH_TOP_ROW_HEIGHT } from "./panelSize";
 import { messageDissolveLength } from "./readability";
 import { createDefaultHost, type ActionHost } from "./a2ui/actions";
 import { SurfaceInteractionContext } from "./a2ui/interaction";
+import type { StealthController } from "../stealth/useStealth";
 import { HistoryView } from "./history/HistoryView";
 import { ModelChooser } from "./ModelChooser";
 import { ThinkingSection } from "./ThinkingSection";
@@ -43,6 +44,8 @@ const KEY_ERROR_KINDS = new Set(["key-missing", "invalid-key"]);
 interface AiPanelProps {
 	session: AiSession;
 	onClose: () => void;
+	/** Stealth mode, for the header button; the button is left out where it is not supported. */
+	stealth?: Pick<StealthController, "status" | "busy" | "toggle">;
 	/** Tells the notch how tall the panel wants to be. */
 	onDesiredHeight?: (height: number) => void;
 	/** What buttons in answers may ask the notch to do; omitted ones stay disabled. */
@@ -72,7 +75,7 @@ export function AiPanel(props: AiPanelProps) {
 	);
 }
 
-function AiPanelContent({ session, onClose, onDesiredHeight }: AiPanelProps) {
+function AiPanelContent({ session, onClose, onDesiredHeight, stealth }: AiPanelProps) {
 	const { draft, setDraft, scrollMemory } = session;
 	// Either the conversation, or the list of past chats in its place.
 	const [view, setView] = useState<"chat" | "history">("chat");
@@ -307,6 +310,23 @@ function AiPanelContent({ session, onClose, onDesiredHeight }: AiPanelProps) {
 				<span className="zai-title">Zara</span>
 				{crumb && <span className="zai-resumed">{crumb}</span>}
 				<span className="zai-spacer" />
+				{stealth?.status?.supported && (
+					<button
+						type="button"
+						className={`zai-icon-button zai-stealth-button ${stealth.status.requested ? "on" : ""}`}
+						onClick={() => void stealth.toggle()}
+						disabled={stealth.busy}
+						aria-label="Stealth mode"
+						aria-pressed={stealth.status.requested}
+						title={
+							stealth.status.requested
+								? "Stealth is on: Zara is hidden from screen capture. Click to turn it off."
+								: "Stealth: hide Zara from screen capture and sharing."
+						}
+					>
+						<VenetianMask size={14} />
+					</button>
+				)}
 				<button
 					type="button"
 					className="zai-icon-button"

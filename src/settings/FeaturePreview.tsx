@@ -1,24 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import {
-	ArrowUpDown,
-	BatteryFull,
-	BatteryWarning,
-	ChevronDown,
-	CloudSun,
-	Cpu,
-	HardDrive,
-	MemoryStick,
-	Music2,
-	RotateCcw,
-	Sun,
-	Volume2
-} from "lucide-react";
+import { ArrowUpDown, BatteryFull, BatteryWarning, ChevronDown, CloudSun, Cpu, HardDrive, MemoryStick, Music2, RotateCcw, Sun, Volume2 } from "../icons/glyphs";
 import { EdgeSurface } from "../components/EdgeSurface";
 import { DeviceArt, DeviceArtDefs } from "../devices/DeviceArt";
 import type { useSettings } from "./useSettings";
 import type { SettingsTab } from "./types";
 import { PreviewMediaPlayer } from "./PreviewMediaPlayer";
+import { ClockFace } from "../notch/clock/ClockFace";
+import { clockParts } from "../notch/clock/clockParts";
 import "../App.css";
 import "../Overlay.css";
 
@@ -132,11 +121,7 @@ function NotchPreview({
 						)
 					: 180;
 	const lowBattery = 15 <= settings.lowBatteryThreshold;
-	const clock = new Date(2024, 0, 1, 15, 42).toLocaleTimeString([], {
-		hour: "2-digit",
-		minute: "2-digit",
-		hour12: !settings.timeFormat24h
-	});
+	const clock = clockParts(new Date(2024, 0, 1, 15, 42), !settings.timeFormat24h);
 	const renderWidget = (id: string) => {
 		if (id === "weather")
 			return settings.weatherEnabled ? (
@@ -259,7 +244,9 @@ function NotchPreview({
 									</div>
 								)}
 							</div>
-							<div className="time-center settings-preview-time">{clock}</div>
+							<div className="time-center settings-preview-time">
+								<ClockFace {...clock} />
+							</div>
 							<div className="side-content right">
 								{albumArtEnabled && (
 									<div className="album-art-glow-wrapper">
@@ -289,7 +276,7 @@ function NotchPreview({
 								)}
 							</div>
 							<div className="time-center settings-preview-time">
-								<span>{clock}</span>
+								<ClockFace {...clock} />
 							</div>
 							<div className="side-content right">
 								{feature === "resting" && (
