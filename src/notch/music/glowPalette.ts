@@ -130,7 +130,8 @@ function strongestHues(votes: Vote[]): number[] {
 	// A hue's strength counts its neighbours, so a red that straddles two bins is one red.
 	const spread = histogram.map(
 		(binWeight, bin) =>
-			binWeight + 0.5 * (histogram[(bin + 1) % HUE_BINS] + histogram[(bin + HUE_BINS - 1) % HUE_BINS])
+			binWeight +
+			0.5 * (histogram[(bin + 1) % HUE_BINS] + histogram[(bin + HUE_BINS - 1) % HUE_BINS])
 	);
 
 	const centers: number[] = [];

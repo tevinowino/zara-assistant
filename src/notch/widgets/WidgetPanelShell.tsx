@@ -42,7 +42,11 @@ export function WidgetPanelShell({
 					onClick={(event) => event.stopPropagation()}
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
-					exit={{ opacity: 0, filter: "blur(4px)", transition: { duration: 0.1 } }}
+					exit={{
+						opacity: 0,
+						filter: "blur(4px)",
+						transition: { duration: 0.1 }
+					}}
 					transition={{ type: "spring", stiffness: 400, damping: 30 }}
 				>
 					{children}

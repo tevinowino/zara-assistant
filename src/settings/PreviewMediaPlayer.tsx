@@ -10,12 +10,21 @@ import {
 	VolumeHighIcon,
 	VolumeLowIcon
 } from "../icons";
+import type { MediaLayout } from "../notch/music/mediaLayouts";
+import { MusicCard } from "../notch/views/MusicCard";
 
 const TRACKS = [
 	{ title: "Sample track", artist: "Zara preview" },
 	{ title: "Next track", artist: "Zara preview" },
 	{ title: "Another track", artist: "Zara preview" }
 ];
+
+/** A made-up red and purple cover for the card preview, so no real album art is needed. */
+const SAMPLE_COVER_URL =
+	"data:image/svg+xml;utf8," +
+	encodeURIComponent(
+		"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#d1343f'/><stop offset='0.55' stop-color='#8a2fb8'/><stop offset='1' stop-color='#2b1458'/></linearGradient></defs><rect width='100' height='100' fill='url(#g)'/></svg>"
+	);
 
 function formatTime(seconds: number) {
 	return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
@@ -27,7 +36,7 @@ export function PreviewMediaPlayer({
 	volumeExpanded,
 	onVolumeExpandedChange
 }: {
-	layout: "classic" | "compact";
+	layout: MediaLayout;
 	onLayoutChange: (layout: "classic" | "compact") => void;
 	volumeExpanded: boolean;
 	onVolumeExpandedChange: (expanded: boolean) => void;
@@ -104,7 +113,27 @@ export function PreviewMediaPlayer({
 			className="expanded-music-container settings-preview-player"
 			onClick={(event) => event.stopPropagation()}
 		>
-			{layout === "compact" ? (
+			{layout === "card" ? (
+				<MusicCard
+					title={TRACKS[track].title}
+					artist={TRACKS[track].artist}
+					artUrl={SAMPLE_COVER_URL}
+					artKey={track}
+					isPlaying={playing}
+					positionMs={position * 1000}
+					durationMs={duration * 1000}
+					seekEnabled
+					onSeekStart={() => {}}
+					onSeekChange={(positionMs) => setPosition(Math.round(positionMs / 1000))}
+					onSeekEnd={() => {}}
+					volume={volume}
+					onVolumeChange={setVolume}
+					onTogglePlayPause={() => setPlaying((value) => !value)}
+					onPrevious={() => skip(-1)}
+					onNext={() => skip(1)}
+					onOpenAudioOutput={() => {}}
+				/>
+			) : layout === "compact" ? (
 				<div className="cmp">
 					<div className="cmp-row cmp-row-info">
 						<button

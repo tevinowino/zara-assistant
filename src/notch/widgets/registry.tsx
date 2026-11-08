@@ -16,9 +16,17 @@ import type { ComponentType } from "react";
 import { isPanelEnabled, type NotchPanel, type NotchPanelPreferences } from "../panels/notchPanels";
 import { useClipboardMonitor } from "../clipboard/useClipboardHistory";
 import type { ZaraMode } from "../types";
-import { ClipboardPanel, CLIPBOARD_PANEL_HEIGHT_PX, CLIPBOARD_PANEL_WIDTH_PX } from "../views/ClipboardPanel";
+import {
+	ClipboardPanel,
+	CLIPBOARD_PANEL_HEIGHT_PX,
+	CLIPBOARD_PANEL_WIDTH_PX
+} from "../views/ClipboardPanel";
 import { NotesPanel, NOTES_PANEL_HEIGHT_PX, NOTES_PANEL_WIDTH_PX } from "../views/NotesPanel";
-import { WeatherPanel, WEATHER_PANEL_HEIGHT_PX, WEATHER_PANEL_WIDTH_PX } from "../views/WeatherPanel";
+import {
+	WeatherPanel,
+	WEATHER_PANEL_HEIGHT_PX,
+	WEATHER_PANEL_WIDTH_PX
+} from "../views/WeatherPanel";
 
 /** What the notch hands every widget view; a view takes the parts it needs. */
 export interface WidgetPanelProps {
@@ -57,7 +65,11 @@ function ClipboardBackground({ enabled }: WidgetBackgroundProps) {
 }
 
 export const WIDGET_VIEWS: Partial<Record<NotchPanel, NotchWidgetView>> = {
-	notes: { widthPx: NOTES_PANEL_WIDTH_PX, heightPx: NOTES_PANEL_HEIGHT_PX, Panel: NotesPanel },
+	notes: {
+		widthPx: NOTES_PANEL_WIDTH_PX,
+		heightPx: NOTES_PANEL_HEIGHT_PX,
+		Panel: NotesPanel
+	},
 	clipboard: {
 		widthPx: CLIPBOARD_PANEL_WIDTH_PX,
 		heightPx: CLIPBOARD_PANEL_HEIGHT_PX,

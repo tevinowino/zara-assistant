@@ -8,6 +8,7 @@ import type { SettingsTab } from "./types";
 import { PreviewMediaPlayer } from "./PreviewMediaPlayer";
 import { ClockFace } from "../notch/clock/ClockFace";
 import { clockParts } from "../notch/clock/clockParts";
+import { mediaLayoutSize } from "../notch/music/mediaLayouts";
 import "../App.css";
 import "../Overlay.css";
 
@@ -108,9 +109,8 @@ function NotchPreview({
 			? 235
 			: isMusic
 				? musicOpen
-					? previewLayout === "compact"
-						? 300
-						: 340
+					? mediaLayoutSize({ layout: previewLayout, hasProgressBar: true, volumeExpanded: false })
+							.widthPx
 					: settings.musicCompactNotch
 						? 230
 						: 270
@@ -186,9 +186,8 @@ function NotchPreview({
 					height: isDevice
 						? 76
 						: isMusic && musicOpen
-							? previewLayout === "compact"
-								? 132 + (volumeExpanded ? 36 : 0)
-								: 120
+							? mediaLayoutSize({ layout: previewLayout, hasProgressBar: true, volumeExpanded })
+									.heightPx
 							: 36,
 					scale: feature === "theme" ? settings.scale : 1
 				}}

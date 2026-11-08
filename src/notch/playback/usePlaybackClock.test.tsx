@@ -62,17 +62,14 @@ describe("usePlaybackClock", () => {
 	});
 
 	it("jumps to a new report from the player", () => {
-		const { result, rerender } = renderHook(
-			(props) => usePlaybackClock(props),
-			{
-				initialProps: {
-					positionMs: 52_000,
-					positionUpdatedAt: START_MS,
-					durationMs: 200_000,
-					isPlaying: true
-				}
+		const { result, rerender } = renderHook((props) => usePlaybackClock(props), {
+			initialProps: {
+				positionMs: 52_000,
+				positionUpdatedAt: START_MS,
+				durationMs: 200_000,
+				isPlaying: true
 			}
-		);
+		});
 
 		rerender({
 			positionMs: 120_000,

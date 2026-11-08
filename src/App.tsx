@@ -76,6 +76,9 @@ import {
 } from "./notch/views/ControlsPanel";
 import { OWNS_SCROLL_SELECTOR } from "./notch/widgets/WidgetPanelShell";
 import { WidgetBackgrounds, WidgetPanels, widgetViewSize } from "./notch/widgets/registry";
+import { mediaLayoutSize } from "./notch/music/mediaLayouts";
+import { glowBackground } from "./notch/music/glowPalette";
+import { useGlowPalette } from "./notch/music/useGlowPalette";
 import { MusicPlayerView } from "./notch/views/MusicPlayerView";
 import { MusicBubble } from "./notch/views/MusicBubble";
 import { ShelfBubble } from "./notch/views/ShelfBubble";
@@ -702,6 +705,10 @@ function App() {
 		skipPrevious,
 		handleVolumeChange
 	} = media;
+	// The card layout's glow takes its colors from the cover; the other layouts blur the cover itself.
+	const glowPalette = useGlowPalette(
+		mediaLayout === "card" && settingsAmbienceEnabled ? albumArtUrl : null
+	);
 
 	// Like the Dynamic Island, the collapsed notch shows one live activity at a
 	// time. Music fades a few seconds after playback stops. A set timer
@@ -1208,6 +1215,14 @@ function App() {
 	// The 24-hour clock is ~16px narrower than the 12-hour one.
 	const clock24hTrim = timeFormat24h ? 16 : 0;
 
+	// The notch's size while the music view is open, which depends on the chosen layout.
+	const openMusicSize = () =>
+		mediaLayoutSize({
+			layout: mediaLayout,
+			hasProgressBar: (mediaInfo.duration_ms ?? 0) > 0,
+			volumeExpanded: compactVolumeExpanded
+		});
+
 	// Calculate width dynamically based on enabled features
 	const getDynamicWidth = () => {
 		if (zaraMode === "device" && deviceAlert) return 330;
@@ -1226,7 +1241,7 @@ function App() {
 			const totalWidgets = statusWidgets.left.length + statusWidgets.right.length;
 			return Math.max(Math.min(200 + totalWidgets * 50, 380) - clock24hTrim, statusFitWidth);
 		}
-		if (isMusicMode && isOpen) return mediaLayout === "compact" ? 300 : 340;
+		if (isMusicMode && isOpen) return openMusicSize().widthPx;
 		if ((showPowerPulse || showLowBatteryPulse) && !isHovered) return 200;
 
 		let w = 140 - clock24hTrim;
@@ -1268,14 +1283,7 @@ function App() {
 		if (zaraMode === "ai") return fitAiPanelHeight(aiPanelHeight, window.innerHeight / scale);
 		if (zaraMode === "wifi" || zaraMode === "bluetooth") return 300;
 		if (zaraMode === "status") return 36;
-		if (isMusicMode && isOpen) {
-			const hasProgressBar = (mediaInfo.duration_ms ?? 0) > 0;
-			let h = mediaLayout === "compact" ? (hasProgressBar ? 132 : 116) : 120;
-			if (mediaLayout === "compact") {
-				if (compactVolumeExpanded) h += 36;
-			}
-			return h;
-		}
+		if (isMusicMode && isOpen) return openMusicSize().heightPx;
 		return 36;
 	};
 
@@ -1418,7 +1426,28 @@ function App() {
 					<EdgeSurface edge="top" flares={isImpacted} />
 					{stealthOn && <StealthRim active={stealthHolding} />}
 					<AnimatePresence>
-						{isMusicMode && settingsAmbienceEnabled && albumArtUrl && isOpen && !isCalendarMode && (
+						{isMusicMode &&
+							settingsAmbienceEnabled &&
+							mediaLayout === "card" &&
+							glowPalette &&
+							isOpen &&
+							!isCalendarMode && (
+								<motion.div
+									key="palette-glow"
+									className="notch-ambient-glow-palette"
+									style={{ background: glowBackground(glowPalette) }}
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.6 }}
+								/>
+							)}
+						{isMusicMode &&
+							settingsAmbienceEnabled &&
+							mediaLayout !== "card" &&
+							albumArtUrl &&
+							isOpen &&
+							!isCalendarMode && (
 							<motion.div
 								className="notch-ambient-glow"
 								initial={{ opacity: 0 }}

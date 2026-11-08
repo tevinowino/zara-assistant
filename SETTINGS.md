@@ -72,7 +72,7 @@ Edit `settings.json` with any text editor while Zara is running. Changes are app
 
 | Key                                | Type                      | Default     | Description                                                                                     |
 | ---------------------------------- | ------------------------- | ----------- | ----------------------------------------------------------------------------------------------- |
-| `zara-media-layout`               | `"classic"` / `"compact"` | `"classic"` | Expanded player style. **classic** = large album art. **compact** = small thumbnail + controls. |
+| `zara-media-layout`               | `"classic"` / `"compact"` / `"card"` | `"classic"` | Expanded player style. **classic** = large album art. **compact** = small thumbnail + controls. **card** = the album cover fills the card, with the artist and title on a blurred band, glass transport buttons and a volume slider. The ambient glow around the card takes its colors from the cover. An unknown value is read as `"classic"`. |
 | `zara-media-ambience-enabled`     | `"true"` / `"false"`      | `"true"`    | Colored ambient glow behind expanded album art.                                                 |
 | `zara-media-compact-glow-enabled` | `"true"` / `"false"`      | `"true"`    | Glow effect around the collapsed compact thumbnail.                                             |
 | `zara-media-visualizer-enabled`   | `"true"` / `"false"`      | `"true"`    | Audio visualizer bars in music mode. Also accepts `zara-visualizer-enabled` (legacy alias).    |

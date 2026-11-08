@@ -15,13 +15,15 @@ import {
 import { TitleMarquee } from "../components/TitleMarquee";
 import { Visualizer } from "../components/Visualizer";
 import type { useMediaPlayback } from "../hooks/useMediaPlayback";
+import type { MediaLayout } from "../music/mediaLayouts";
+import { MusicCardView } from "./MusicCardView";
 
 export interface MusicPlayerViewProps {
 	/** The now-playing state and controls from the media hook. */
 	media: ReturnType<typeof useMediaPlayback>;
 	/** Which player layout the user chose in Settings. */
-	mediaLayout: "classic" | "compact";
-	setMediaLayout: Dispatch<SetStateAction<"classic" | "compact">>;
+	mediaLayout: MediaLayout;
+	setMediaLayout: Dispatch<SetStateAction<MediaLayout>>;
 	/** Whether the compact layout's volume slider is expanded. */
 	compactVolumeExpanded: boolean;
 	setCompactVolumeExpanded: Dispatch<SetStateAction<boolean>>;
@@ -59,7 +61,9 @@ export function MusicPlayerView({
 			exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.1 } }}
 			transition={{ type: "spring", stiffness: 500, damping: 30 }}
 		>
-			{mediaLayout === "compact" ? (
+			{mediaLayout === "card" ? (
+				<MusicCardView media={media} />
+			) : mediaLayout === "compact" ? (
 				<CompactMediaPlayer
 					mediaInfo={mediaInfo}
 					albumArtUrl={albumArtUrl}

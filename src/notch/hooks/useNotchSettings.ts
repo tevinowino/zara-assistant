@@ -5,6 +5,7 @@ import type { WidgetConfig } from "../../components/StatusWidgetConfig";
 import { useSettingsSync } from "../../hooks/useSettingsSync";
 import { reloadIfMirrorWasStale } from "../../hooks/settingsMirror";
 import { asNotchPanel, type NotchPanel } from "../types";
+import { MEDIA_LAYOUT_SETTING_KEY, parseMediaLayout, type MediaLayout } from "../music/mediaLayouts";
 import { parseQuickApps, QUICK_APPS_SETTING_KEY, type QuickApp } from "../apps/quickApps";
 import {
 	isPanelEnabled,
@@ -106,8 +107,8 @@ export function useNotchSettings({ windowLabel }: UseNotchSettingsOptions) {
 	const [settingsCornersEnabled, setSettingsCornersEnabled] = useState(
 		() => localStorage.getItem("zara-corners-enabled") === "true"
 	);
-	const [mediaLayout, setMediaLayout] = useState<"classic" | "compact">(
-		() => (localStorage.getItem("zara-media-layout") as "classic" | "compact") || "classic"
+	const [mediaLayout, setMediaLayout] = useState<MediaLayout>(() =>
+		parseMediaLayout(localStorage.getItem(MEDIA_LAYOUT_SETTING_KEY))
 	);
 
 	useEffect(() => {
@@ -229,7 +230,7 @@ export function useNotchSettings({ windowLabel }: UseNotchSettingsOptions) {
 			"zara-media-album-art-enabled": setSettingsAlbumArtEnabled,
 			"zara-media-ambience-enabled": setSettingsAmbienceEnabled,
 			"zara-media-compact-glow-enabled": setSettingsCompactGlowEnabled,
-			"zara-media-layout": setMediaLayout,
+			[MEDIA_LAYOUT_SETTING_KEY]: (value: unknown) => setMediaLayout(parseMediaLayout(value)),
 			"zara-corners-enabled": setSettingsCornersEnabled,
 			"zara-scale": setScale,
 			"zara-low-battery-threshold": setLowBatteryThreshold,

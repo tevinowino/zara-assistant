@@ -9,6 +9,7 @@ import type { NotchPanelChoice } from "./useSettings";
 import { WidgetPicker } from "./WidgetPicker";
 import { QuickAppsSection } from "./QuickAppsSection";
 import type { QuickApp } from "../notch/apps/quickApps";
+import type { MediaLayout } from "../notch/music/mediaLayouts";
 import {
 	isPanelEnabled,
 	notchPanelDefinition,
@@ -42,8 +43,8 @@ interface NotchTabProps {
 	toggleMusicCompactNotch: () => void;
 	shelfPersist: boolean;
 	toggleShelfPersist: () => void;
-	mediaLayout: "classic" | "compact";
-	toggleMediaLayout: (layout: "classic" | "compact") => void;
+	mediaLayout: MediaLayout;
+	toggleMediaLayout: (layout: MediaLayout) => void;
 	mediaAmbienceEnabled: boolean;
 	toggleAmbience: () => void;
 	mediaCompactGlowEnabled: boolean;
@@ -253,10 +254,11 @@ export function NotchTab({
 								aria-label="Media Layout"
 								items={[
 									{ value: "classic", label: "Classic" },
-									{ value: "compact", label: "Compact" }
+									{ value: "compact", label: "Compact" },
+									{ value: "card", label: "Card" }
 								]}
 								value={mediaLayout}
-								onValueChange={(layout) => toggleMediaLayout(layout as "classic" | "compact")}
+								onValueChange={(layout) => toggleMediaLayout(layout as MediaLayout)}
 							/>
 						</SettingRow>
 

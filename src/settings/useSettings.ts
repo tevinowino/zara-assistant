@@ -6,6 +6,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { useSettingsSync } from "../hooks/useSettingsSync";
 import { reloadIfMirrorWasStale } from "../hooks/settingsMirror";
 import { hexToHsl } from "../theme";
+import { MEDIA_LAYOUT_SETTING_KEY, parseMediaLayout, type MediaLayout } from "../notch/music/mediaLayouts";
 import {
 	addQuickApp,
 	moveQuickApp as moveQuickAppIn,
@@ -108,8 +109,8 @@ export function useSettings() {
 	);
 	const [mediaAmbienceEnabled, setMediaAmbienceEnabled] = useState(true);
 	const [mediaCompactGlowEnabled, setMediaCompactGlowEnabled] = useState(true);
-	const [mediaLayout, setMediaLayout] = useState<"classic" | "compact">(
-		() => (localStorage.getItem("zara-media-layout") as "classic" | "compact") || "classic"
+	const [mediaLayout, setMediaLayout] = useState<MediaLayout>(() =>
+		parseMediaLayout(localStorage.getItem(MEDIA_LAYOUT_SETTING_KEY))
 	);
 	const [cornersEnabled, setCornersEnabled] = useState(
 		() => localStorage.getItem("zara-corners-enabled") === "true"
@@ -356,7 +357,7 @@ export function useSettings() {
 		"zara-music-compact-notch": setMusicCompactNotch,
 		"zara-media-ambience-enabled": setMediaAmbienceEnabled,
 		"zara-media-compact-glow-enabled": setMediaCompactGlowEnabled,
-		"zara-media-layout": setMediaLayout,
+		[MEDIA_LAYOUT_SETTING_KEY]: (value: unknown) => setMediaLayout(parseMediaLayout(value)),
 		"zara-corners-enabled": setCornersEnabled,
 		"zara-time-format-24h": setTimeFormat24h,
 		"zara-low-battery-threshold": setLowBatteryThreshold,
@@ -512,9 +513,9 @@ export function useSettings() {
 		saveSetting("zara-shelf-persist", String(next));
 	};
 
-	const toggleMediaLayout = (layout: "classic" | "compact") => {
+	const toggleMediaLayout = (layout: MediaLayout) => {
 		setMediaLayout(layout);
-		saveSetting("zara-media-layout", layout);
+		saveSetting(MEDIA_LAYOUT_SETTING_KEY, layout);
 	};
 
 	const toggleVolumeOverlay = () => {

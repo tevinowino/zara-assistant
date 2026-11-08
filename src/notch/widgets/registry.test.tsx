@@ -29,7 +29,10 @@ describe("widgetViewSize", () => {
 	});
 
 	it("gives the size the notch takes while it shows the clipboard", () => {
-		expect(widgetViewSize("clipboard")).toEqual({ widthPx: 380, heightPx: 300 });
+		expect(widgetViewSize("clipboard")).toEqual({
+			widthPx: 380,
+			heightPx: 300
+		});
 	});
 
 	it("gives the size the notch takes while it shows the weather", () => {
@@ -61,7 +64,9 @@ describe("WidgetBackgrounds", () => {
 
 		render(<WidgetBackgrounds preferences={{ enabled: ["ai", "clipboard"] }} active />);
 
-		expect(callsTo("clipboard_history_enable").at(-1)?.args).toEqual({ enabled: true });
+		expect(callsTo("clipboard_history_enable").at(-1)?.args).toEqual({
+			enabled: true
+		});
 	});
 
 	it("tells the backend not to watch the clipboard while its widget is off", () => {
@@ -69,7 +74,9 @@ describe("WidgetBackgrounds", () => {
 
 		render(<WidgetBackgrounds preferences={{ enabled: ["ai", "notes"] }} active />);
 
-		expect(callsTo("clipboard_history_enable").at(-1)?.args).toEqual({ enabled: false });
+		expect(callsTo("clipboard_history_enable").at(-1)?.args).toEqual({
+			enabled: false
+		});
 	});
 
 	it("never watches the clipboard in a window that is not the notch", () => {
@@ -77,6 +84,8 @@ describe("WidgetBackgrounds", () => {
 
 		render(<WidgetBackgrounds preferences={{ enabled: ["clipboard"] }} active={false} />);
 
-		expect(callsTo("clipboard_history_enable").at(-1)?.args).toEqual({ enabled: false });
+		expect(callsTo("clipboard_history_enable").at(-1)?.args).toEqual({
+			enabled: false
+		});
 	});
 });
