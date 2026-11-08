@@ -1,9 +1,9 @@
-import { AnimatePresence, motion } from "framer-motion";
 import { RefreshCw } from "../../icons/glyphs";
 import type { Forecast } from "../weather/forecast";
 import { useForecast } from "../weather/useForecast";
 import { getWeatherIcon } from "../weather/weatherSupport";
 import type { ZaraMode } from "../types";
+import { WidgetPanelShell } from "../widgets/WidgetPanelShell";
 
 /** Size of the notch while it shows the weather, including its 36px top row. */
 export const WEATHER_PANEL_WIDTH_PX = 380;
@@ -19,20 +19,9 @@ export interface WeatherPanelProps {
 /** The weather widget: now, the next hours and the next days for the user's place. */
 export function WeatherPanel({ zaraMode, timeFormat24h }: WeatherPanelProps) {
 	return (
-		<AnimatePresence>
-			{zaraMode === "weather" && (
-				<motion.div
-					className="weather-panel"
-					onClick={(event) => event.stopPropagation()}
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0, filter: "blur(4px)", transition: { duration: 0.1 } }}
-					transition={{ type: "spring", stiffness: 400, damping: 30 }}
-				>
-					<WeatherContent timeFormat24h={timeFormat24h} />
-				</motion.div>
-			)}
-		</AnimatePresence>
+		<WidgetPanelShell panel="weather" zaraMode={zaraMode} className="weather-panel">
+			<WeatherContent timeFormat24h={timeFormat24h} />
+		</WidgetPanelShell>
 	);
 }
 

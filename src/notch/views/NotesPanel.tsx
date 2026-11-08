@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Plus, X } from "../../icons/glyphs";
 import type { Note } from "../../ai/types";
 import { describeNoteAge } from "../notes/noteAge";
 import { useNotes } from "../notes/useNotes";
 import type { ZaraMode } from "../types";
+import { WidgetPanelShell } from "../widgets/WidgetPanelShell";
 
 /** Size of the notch while it shows the notes, including its 36px top row. */
 export const NOTES_PANEL_WIDTH_PX = 380;
@@ -23,20 +23,9 @@ export interface NotesPanelProps {
 /** The notes widget: write a note, see the latest ones, edit or delete them. */
 export function NotesPanel({ zaraMode, onFieldFocusChange }: NotesPanelProps) {
 	return (
-		<AnimatePresence>
-			{zaraMode === "notes" && (
-				<motion.div
-					className="notes-panel"
-					onClick={(event) => event.stopPropagation()}
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0, filter: "blur(4px)", transition: { duration: 0.1 } }}
-					transition={{ type: "spring", stiffness: 400, damping: 30 }}
-				>
-					<NotesContent onFieldFocusChange={onFieldFocusChange} />
-				</motion.div>
-			)}
-		</AnimatePresence>
+		<WidgetPanelShell panel="notes" zaraMode={zaraMode} className="notes-panel" ownsScroll>
+			<NotesContent onFieldFocusChange={onFieldFocusChange} />
+		</WidgetPanelShell>
 	);
 }
 

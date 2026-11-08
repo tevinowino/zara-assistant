@@ -1,5 +1,4 @@
 import { ChevronDown, ChevronUp } from "../icons/glyphs";
-import { Calendar, ClipboardList, CloudSun, Headphones, SlidersHorizontal, Sparkles, StickyNote, type Glyph } from "../icons/glyphs";
 import {
 	isPanelEnabled,
 	NOTCH_PANEL_DEFINITIONS,
@@ -9,16 +8,6 @@ import {
 } from "../notch/panels/notchPanels";
 import { SettingRow } from "./SettingRow";
 import { SettingSwitch } from "./SettingSwitch";
-
-const PANEL_ICONS: Record<NotchPanel, Glyph> = {
-	ai: Sparkles,
-	calendar: Calendar,
-	"command-center": SlidersHorizontal,
-	devices: Headphones,
-	notes: StickyNote,
-	clipboard: ClipboardList,
-	weather: CloudSun
-};
 
 export interface WidgetPickerProps {
 	preferences: NotchPanelPreferences;
@@ -51,7 +40,7 @@ export function WidgetPicker({ preferences, onToggle, onMove }: WidgetPickerProp
 				return (
 					<SettingRow
 						key={panel}
-						icon={PANEL_ICONS[panel]}
+						icon={definition.icon}
 						label={definition.label}
 						desc={definition.description}
 						divider={index < rows.length - 1}

@@ -1,76 +1,99 @@
 /**
  * The widgets ("panels") the notch can show, and which of them the user has chosen.
  *
- * Adding a widget is one entry in NOTCH_PANEL_DEFINITIONS, a view for it, and its size; the
- * choice of widgets, their order and the Settings picker follow from the definition. What
- * the user chose is one stored preference, `NOTCH_PANELS_SETTING_KEY`: the enabled widgets
- * in the order the notch cycles through them.
+ * Adding a widget is one entry in NOTCH_PANEL_DEFINITIONS (what it is: its id, name, icon
+ * and default) and, for a widget drawn by a view of its own, one entry in WIDGET_VIEWS
+ * (`../widgets/registry.tsx`: how it is drawn: size, panel, background work). `NotchPanel`,
+ * the Settings picker and the notch's width, height and mounting follow from those two.
+ * What the user chose is one stored preference, `NOTCH_PANELS_SETTING_KEY`: the enabled
+ * widgets in the order the notch cycles through them.
  */
 
-export type NotchPanel =
-	| "ai"
-	| "calendar"
-	| "command-center"
-	| "devices"
-	| "notes"
-	| "clipboard"
-	| "weather";
+import {
+	Calendar,
+	ClipboardList,
+	CloudSun,
+	Headphones,
+	SlidersHorizontal,
+	Sparkles,
+	StickyNote,
+	type Glyph
+} from "../../icons/glyphs";
 
-export interface NotchPanelDefinition {
-	id: NotchPanel;
+/** What a definition says before its id is narrowed to the ids that exist. */
+interface NotchPanelDefinitionInput {
+	id: string;
 	/** The name in the picker and in the notch. */
 	label: string;
 	/** What it is for, in one line, in the picker. */
 	description: string;
+	/** The icon in the picker. */
+	icon: Glyph;
 	/** Whether it is on for someone who has never chosen. */
 	defaultEnabled: boolean;
 }
 
 /** Every widget, in the order a new user first sees them. */
-export const NOTCH_PANEL_DEFINITIONS: readonly NotchPanelDefinition[] = [
+const DEFINITIONS = [
 	{
 		id: "ai",
 		label: "Assistant",
 		description: "Ask Zara questions and get answers in the notch.",
+		icon: Sparkles,
 		defaultEnabled: true
 	},
 	{
 		id: "calendar",
 		label: "Calendar & Timer",
 		description: "Browse months and run a countdown timer.",
+		icon: Calendar,
 		defaultEnabled: true
 	},
 	{
 		id: "command-center",
 		label: "Command Center",
 		description: "Wi-Fi, Bluetooth, volume, brightness and your favourite apps.",
+		icon: SlidersHorizontal,
 		defaultEnabled: true
 	},
 	{
 		id: "devices",
 		label: "Connected Devices",
 		description: "Batteries and audio of the devices you have connected.",
+		icon: Headphones,
 		defaultEnabled: false
 	},
 	{
 		id: "notes",
 		label: "Notes",
 		description: "Jot something down and see your latest notes.",
+		icon: StickyNote,
 		defaultEnabled: false
 	},
 	{
 		id: "clipboard",
 		label: "Clipboard History",
 		description: "The last things you copied, ready to copy again.",
+		icon: ClipboardList,
 		defaultEnabled: false
 	},
 	{
 		id: "weather",
 		label: "Weather",
 		description: "The forecast for the next hours and days.",
+		icon: CloudSun,
 		defaultEnabled: false
 	}
-];
+] as const satisfies readonly NotchPanelDefinitionInput[];
+
+/** The id of every widget; derived from the definitions, so adding one adds its id here. */
+export type NotchPanel = (typeof DEFINITIONS)[number]["id"];
+
+export interface NotchPanelDefinition extends NotchPanelDefinitionInput {
+	id: NotchPanel;
+}
+
+export const NOTCH_PANEL_DEFINITIONS: readonly NotchPanelDefinition[] = DEFINITIONS;
 
 export const NOTCH_PANELS: readonly NotchPanel[] = NOTCH_PANEL_DEFINITIONS.map(
 	(definition) => definition.id

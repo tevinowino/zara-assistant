@@ -33,6 +33,12 @@ describe("NOTCH_PANEL_DEFINITIONS", () => {
 		}
 	});
 
+	it("gives every widget an icon for the picker", () => {
+		for (const definition of NOTCH_PANEL_DEFINITIONS) {
+			expect(definition.icon, definition.id).toBeTruthy();
+		}
+	});
+
 	it("has no two widgets with the same id", () => {
 		expect(new Set(NOTCH_PANELS).size).toBe(NOTCH_PANELS.length);
 	});

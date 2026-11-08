@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Check, X } from "../../icons/glyphs";
 import { describeNoteAge } from "../notes/noteAge";
 import { useClipboardHistory, type ClipboardEntry } from "../clipboard/useClipboardHistory";
 import type { ZaraMode } from "../types";
+import { WidgetPanelShell } from "../widgets/WidgetPanelShell";
 
 /** Size of the notch while it shows the clipboard history, including its 36px top row. */
 export const CLIPBOARD_PANEL_WIDTH_PX = 380;
@@ -20,20 +20,9 @@ export interface ClipboardPanelProps {
 /** The clipboard widget: what was copied lately, one click to copy it again. */
 export function ClipboardPanel({ zaraMode }: ClipboardPanelProps) {
 	return (
-		<AnimatePresence>
-			{zaraMode === "clipboard" && (
-				<motion.div
-					className="clipboard-panel"
-					onClick={(event) => event.stopPropagation()}
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0, filter: "blur(4px)", transition: { duration: 0.1 } }}
-					transition={{ type: "spring", stiffness: 400, damping: 30 }}
-				>
-					<ClipboardContent />
-				</motion.div>
-			)}
-		</AnimatePresence>
+		<WidgetPanelShell panel="clipboard" zaraMode={zaraMode} className="clipboard-panel" ownsScroll>
+			<ClipboardContent />
+		</WidgetPanelShell>
 	);
 }
 

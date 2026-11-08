@@ -74,18 +74,8 @@ import {
 	commandCenterPanelHeight,
 	ControlsPanel
 } from "./notch/views/ControlsPanel";
-import { NOTES_PANEL_HEIGHT_PX, NOTES_PANEL_WIDTH_PX, NotesPanel } from "./notch/views/NotesPanel";
-import {
-	WEATHER_PANEL_HEIGHT_PX,
-	WEATHER_PANEL_WIDTH_PX,
-	WeatherPanel
-} from "./notch/views/WeatherPanel";
-import {
-	CLIPBOARD_PANEL_HEIGHT_PX,
-	CLIPBOARD_PANEL_WIDTH_PX,
-	ClipboardPanel
-} from "./notch/views/ClipboardPanel";
-import { useClipboardMonitor } from "./notch/clipboard/useClipboardHistory";
+import { OWNS_SCROLL_SELECTOR } from "./notch/widgets/WidgetPanelShell";
+import { WidgetBackgrounds, WidgetPanels, widgetViewSize } from "./notch/widgets/registry";
 import { MusicPlayerView } from "./notch/views/MusicPlayerView";
 import { MusicBubble } from "./notch/views/MusicBubble";
 import { ShelfBubble } from "./notch/views/ShelfBubble";
@@ -603,22 +593,8 @@ function App() {
 			if (panel && rememberPanelEnabledRef.current) rememberPanelRef.current(panel);
 			setIsOpen(false);
 		}
-		setZaraMode((prev) =>
-			prev === "music" ||
-			prev === "command-center" ||
-			prev === "calendar" ||
-			prev === "status" ||
-			prev === "shelf" ||
-			prev === "wifi" ||
-			prev === "bluetooth" ||
-			prev === "devices" ||
-			prev === "notes" ||
-			prev === "clipboard" ||
-			prev === "weather" ||
-			prev === "ai"
-				? restingModeRef.current
-				: prev
-		);
+		// Every view but a device alert, which runs its own timer, goes back to resting.
+		setZaraMode((prev) => (prev === "device" ? prev : restingModeRef.current));
 	};
 
 	// Shared hover-release, called on DOM hover end and when the backend
@@ -652,8 +628,7 @@ function App() {
 			target.closest(".ask-bar") ||
 			target.closest(".zai-panel") ||
 			target.closest(".shelf-content") ||
-			target.closest(".notes-panel") ||
-			target.closest(".clipboard-panel") ||
+			target.closest(OWNS_SCROLL_SELECTOR) ||
 			target.closest(".qp-list")
 		) {
 			return;
@@ -676,9 +651,6 @@ function App() {
 	function panelAvailable(panel: NotchPanel) {
 		return isPanelEnabled(panelPreferences, panel);
 	}
-
-	// The clipboard is only watched while its widget is on, and only by the notch itself.
-	useClipboardMonitor(windowLabel === "main" && isPanelEnabled(panelPreferences, "clipboard"));
 
 	// Wheel and swipe navigate panels, even from a collapsed live activity.
 	// Music and shelf remain entry points through their activity affordances.
@@ -1242,9 +1214,8 @@ function App() {
 		if (zaraMode === "ai") return AI_PANEL_WIDTH;
 		if (isCalendarMode) return CALENDAR_TIMER_PANEL_WIDTH_PX;
 		if (zaraMode === "shelf") return 380;
-		if (zaraMode === "notes") return NOTES_PANEL_WIDTH_PX;
-		if (zaraMode === "weather") return WEATHER_PANEL_WIDTH_PX;
-		if (zaraMode === "clipboard") return CLIPBOARD_PANEL_WIDTH_PX;
+		const widgetSize = widgetViewSize(zaraMode);
+		if (widgetSize) return widgetSize.widthPx;
 		if (zaraMode === "command-center" && isOpen) return COMMAND_CENTER_PANEL_WIDTH_PX;
 		if (zaraMode === "devices") return DEVICES_PANEL_WIDTH_PX;
 		if (zaraMode === "wifi" || zaraMode === "bluetooth") return 350;
@@ -1288,9 +1259,8 @@ function App() {
 		}
 		if (zaraMode === "command-center")
 			return isOpen ? commandCenterPanelHeight(quickApps.length) : 36;
-		if (zaraMode === "notes") return NOTES_PANEL_HEIGHT_PX;
-		if (zaraMode === "weather") return WEATHER_PANEL_HEIGHT_PX;
-		if (zaraMode === "clipboard") return CLIPBOARD_PANEL_HEIGHT_PX;
+		const widgetSize = widgetViewSize(zaraMode);
+		if (widgetSize) return widgetSize.heightPx;
 		if (zaraMode === "devices") {
 			return devicesPanelHeight;
 		}
@@ -1353,6 +1323,7 @@ function App() {
 	return (
 		<div className="screen" style={{ overflow: "hidden" }}>
 			<AiSessionHost store={aiSessionStore} resumeLast={rememberPanelEnabled} />
+			<WidgetBackgrounds preferences={panelPreferences} active={windowLabel === "main"} />
 			{/* Screen Corners (Top) */}
 			<AnimatePresence>
 				{isVisible && settingsCornersEnabled && (
@@ -1852,14 +1823,12 @@ function App() {
 									)}
 								</AnimatePresence>
 
-								{/* Notes Panel */}
-								<NotesPanel zaraMode={zaraMode} onFieldFocusChange={setFieldFocused} />
-
-								{/* Clipboard Panel */}
-								<ClipboardPanel zaraMode={zaraMode} />
-
-								{/* Weather Panel */}
-								<WeatherPanel zaraMode={zaraMode} timeFormat24h={timeFormat24h} />
+								{/* Widgets with a view of their own: notes, clipboard, weather, ... */}
+								<WidgetPanels
+									zaraMode={zaraMode}
+									onFieldFocusChange={setFieldFocused}
+									timeFormat24h={timeFormat24h}
+								/>
 
 								{/* Command Center Panel */}
 								<ControlsPanel
