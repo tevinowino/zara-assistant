@@ -3,9 +3,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { ZaraMode } from "../types";
 import {
+	decideClaudeCodeAlert,
 	decideNotification,
 	NOTIFICATION_SETTING_KEYS,
 	withAppSeen,
+	type ClaudeCodeAlert,
 	type IncomingNotification,
 	type PillNotification,
 	type SeenApp
@@ -19,6 +21,13 @@ import { useNotificationPreferences } from "./useNotificationPreferences";
 
 /** How often a waiting pill checks whether the notch is free to show it, in milliseconds. */
 const RETRY_INTERVAL_MS = 500;
+
+/**
+ * Gives each Claude Code pill an id of its own. Windows' ids are positive, so these count down
+ * from -1 and never meet them.
+ */
+let lastClaudeCodePillId = 0;
+const nextClaudeCodePillId = () => --lastClaudeCodePillId;
 
 export interface UseNotchNotificationsOptions {
 	/** The window this notch runs in; notifications are only listened for in "main". */
@@ -42,7 +51,7 @@ export interface UseNotchNotificationsOptions {
 
 /**
  * The short pill the notch shows when an app the user has allowed raises a Windows
- * notification. It turns the backend's reader on while the feature is on, applies the user's
+ * notification, or when a Claude Code session needs the user or finishes. It turns the backend's reader on while the feature is on, applies the user's
  * choices (see `decideNotification`), and shows one pill at a time: others queue behind it,
  * and nothing interrupts an open notch, the shelf or a device alert. A waiting pill is shown
  * as soon as the notch is free, or dropped if it has waited too long to be news.
@@ -134,22 +143,35 @@ export function useNotchNotifications({
 		[save]
 	);
 
+	const queuePill = useCallback((pill: PillNotification) => {
+		queueRef.current = enqueueNotification(queueRef.current, pill, Date.now());
+		setAnyWaiting(true);
+		tryPresentRef.current();
+	}, []);
+
 	useEffect(() => {
 		if (windowLabel !== "main") return;
-		const unlisten = listen<IncomingNotification>("windows-notification", ({ payload }) => {
+		const unlistenWindows = listen<IncomingNotification>("windows-notification", ({ payload }) => {
 			const decision = decideNotification(payload, preferencesRef.current, {
 				forceHideText: protectionLapsedRef.current
 			});
 			if (decision.newlySeenApp) rememberSeenApp(decision.newlySeenApp);
-			if (!decision.pill) return;
-			queueRef.current = enqueueNotification(queueRef.current, decision.pill, Date.now());
-			setAnyWaiting(true);
-			tryPresentRef.current();
+			if (decision.pill) queuePill(decision.pill);
+		});
+		const unlistenClaudeCode = listen<ClaudeCodeAlert>("claude-code-alert", ({ payload }) => {
+			const pill = decideClaudeCodeAlert(
+				payload,
+				preferencesRef.current,
+				{ forceHideText: protectionLapsedRef.current },
+				nextClaudeCodePillId()
+			);
+			if (pill) queuePill(pill);
 		});
 		return () => {
-			void unlisten.then((stop) => stop());
+			void unlistenWindows.then((stop) => stop());
+			void unlistenClaudeCode.then((stop) => stop());
 		};
-	}, [windowLabel, rememberSeenApp]);
+	}, [windowLabel, rememberSeenApp, queuePill]);
 
 	/** The user clicked the pill: it goes away, and the next one (if any) takes its place. */
 	const dismiss = useCallback(() => {

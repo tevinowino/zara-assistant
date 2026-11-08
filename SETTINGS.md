@@ -80,6 +80,14 @@ The Lyrics widget (turned on with the other widgets in Settings > Notch). Each n
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `zara-lyrics-offset-ms` | milliseconds | `"0"` | How far the lyrics are moved to fit the player: positive shows each line sooner, negative later. Changed with the +/- buttons in the Lyrics panel, in steps of 250, between -5000 and 5000. |
+### Claude Code
+
+The Claude Code widget (turned on with the other widgets in Settings > Notch). Connecting it, in Settings > Notch > Claude Code, adds hooks to Claude Code's own `settings.json` (after showing what will be added, with a copy of the original kept as `settings.json.zara-backup`). Alerts reuse the notification pill, its duration (`zara-notifications-duration-ms`) and its text choice (`zara-notifications-show-text`). See `docs/privacy.md`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `zara-claude-code-alert-input` | `"true"` / `"false"` | `"true"` | Show a pill when a Claude Code session waits for permission or an answer. |
+| `zara-claude-code-alert-done` | `"true"` / `"false"` | `"true"` | Show a pill when a Claude Code session finishes its turn. |
 
 ### Shelf
 

@@ -9,6 +9,7 @@ import type { NotchPanelChoice } from "./useSettings";
 import { WidgetPicker } from "./WidgetPicker";
 import { QuickAppsSection } from "./QuickAppsSection";
 import { NotificationsSection } from "./NotificationsSection";
+import { ClaudeCodeSection } from "./ClaudeCodeSection";
 import type { QuickApp } from "../notch/apps/quickApps";
 import type { MediaLayout } from "../notch/music/mediaLayouts";
 import {
@@ -233,6 +234,9 @@ export function NotchTab({
 
 			<div className="setting-group-label">Notifications</div>
 			<NotificationsSection />
+
+			<div className="setting-group-label">Claude Code</div>
+			<ClaudeCodeSection widgetOn={isPanelEnabled(notchPanels, "claude-code")} />
 
 			<div className="setting-group-label">Music</div>
 			<div className="setting-group">

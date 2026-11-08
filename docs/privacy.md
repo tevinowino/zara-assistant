@@ -34,6 +34,16 @@ If you turn on "Notification Pill" in Settings > Notch, Zara asks Windows for pe
 - "Show Message Text" off shows only the app's name. The text is also hidden whenever Stealth is switched on but is not holding, because the notch could then be on a shared screen.
 - Zara's own notifications are skipped.
 - Windows still shows its own notification as well; Zara cannot hide it.
+## Claude Code (off by default)
+
+If you turn on the Claude Code widget and press "Connect" in Settings > Notch > Claude Code, Zara adds hooks to Claude Code's own settings file (`%USERPROFILE%\.claude\settings.json`, or inside `CLAUDE_CONFIG_DIR` if you set that). Settings shows exactly what will be added first, a copy of the file as it was is kept beside it as `settings.json.zara-backup`, and Disconnect removes only Zara's entries.
+
+- The hooks run a small PowerShell script (`claude-code-hook.ps1`, in `%APPDATA%\com.zara.app\`) in the background. For each event it appends one line to `claude-code-events.jsonl` in the same folder: the event, the session id, the project folder, the session's title and, when Claude needs you or finishes, the first few hundred characters of Claude's message.
+- It never keeps what you type, what Claude's tools were given or what they returned.
+- The file exists only while the Claude Code widget is on: turning the widget off deletes it, and without it the script does nothing. If Zara is not running, the script stops adding to it at 512 KB.
+- The state of each session is held in memory only, and is forgotten when the widget is turned off.
+- Nothing leaves your PC. There is no local server: nothing can write to Zara over the network.
+- Alerts hide the project and what Claude said when "Show Message Text" is off, or while Stealth is switched on but not holding.
 ## Stored on this PC
 
 - Settings: `%APPDATA%\com.zara.app\settings.json`

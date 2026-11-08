@@ -57,6 +57,10 @@ describe("widgetViewSize", () => {
 		expect(widgetViewSize("lyrics")).toEqual({ widthPx: 380, heightPx: 340 });
 	});
 
+	it("gives the size the notch takes while it shows Claude Code", () => {
+		expect(widgetViewSize("claude-code")).toEqual({ widthPx: 380, heightPx: 300 });
+	});
+
 	it("has no size for a view the notch draws itself", () => {
 		expect(widgetViewSize("calendar")).toBeNull();
 	});
@@ -83,6 +87,47 @@ describe("WidgetPanels", () => {
 });
 
 describe("WidgetBackgrounds", () => {
+	it("starts reading Claude Code's hooks while its widget is on", () => {
+		setInvokeHandler("clipboard_history_enable", () => null);
+		setInvokeHandler("claude_code_enable", () => undefined);
+
+		render(
+			<WidgetBackgrounds
+				preferences={{ enabled: ["ai", "claude-code"] }}
+				active
+				media={nothingPlaying}
+			/>
+		);
+
+		expect(callsTo("claude_code_enable").at(-1)?.args).toEqual({ enabled: true });
+	});
+
+	it("stops reading Claude Code's hooks while its widget is off", () => {
+		setInvokeHandler("clipboard_history_enable", () => null);
+		setInvokeHandler("claude_code_enable", () => undefined);
+
+		render(
+			<WidgetBackgrounds preferences={{ enabled: ["ai", "notes"] }} active media={nothingPlaying} />
+		);
+
+		expect(callsTo("claude_code_enable").at(-1)?.args).toEqual({ enabled: false });
+	});
+
+	it("never reads Claude Code's hooks in a window that is not the notch", () => {
+		setInvokeHandler("clipboard_history_enable", () => null);
+		setInvokeHandler("claude_code_enable", () => undefined);
+
+		render(
+			<WidgetBackgrounds
+				preferences={{ enabled: ["claude-code"] }}
+				active={false}
+				media={nothingPlaying}
+			/>
+		);
+
+		expect(callsTo("claude_code_enable").at(-1)?.args).toEqual({ enabled: false });
+	});
+
 	it("tells the backend to watch the clipboard while its widget is on in the notch", () => {
 		setInvokeHandler("clipboard_history_enable", () => null);
 

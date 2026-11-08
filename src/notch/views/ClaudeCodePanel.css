@@ -1,0 +1,138 @@
+/* The Claude Code widget (see views/ClaudeCodePanel.tsx). */
+
+.claude-panel {
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	padding: 6px 14px 14px;
+	color: var(--zara-text, white);
+	border-radius: 0 0 18px 18px;
+	overflow: hidden;
+	white-space: normal;
+	text-align: left;
+}
+
+.claude-message {
+	margin: auto;
+	max-width: 280px;
+	text-align: center;
+	font-size: 13px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.claude-sessions {
+	flex: 1;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	overflow-y: auto;
+	list-style: none;
+	scrollbar-width: thin;
+}
+
+.claude-session {
+	--claude-state: rgba(255, 255, 255, 0.45);
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	flex: none;
+	padding: 10px 12px;
+	border-radius: 14px;
+	background: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
+	border-left: 3px solid var(--claude-state);
+}
+
+.claude-session[data-state="working"] {
+	--claude-state: #5ac8fa;
+}
+
+.claude-session[data-state="needsInput"] {
+	--claude-state: #ff9f0a;
+}
+
+.claude-session[data-state="done"] {
+	--claude-state: #32d74b;
+}
+
+.claude-session-top {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.claude-session-dot {
+	flex: none;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--claude-state);
+}
+
+.claude-session[data-state="working"] .claude-session-dot {
+	animation: claude-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes claude-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.35;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.claude-session[data-state="working"] .claude-session-dot {
+		animation: none;
+	}
+}
+
+.claude-session-project {
+	min-width: 0;
+	font-size: 13.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.claude-session-state {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--claude-state);
+}
+
+.claude-session-age {
+	margin-left: auto;
+	flex: none;
+	font-size: 11px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.claude-session-title {
+	font-size: 12px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.65));
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.claude-session-excerpt {
+	font-size: 12px;
+	line-height: 1.35;
+	color: rgba(255, 255, 255, 0.82);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}

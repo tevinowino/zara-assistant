@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+	decideClaudeCodeAlert,
 	decideNotification,
 	HIDDEN_TEXT_BODY,
 	parseNotificationPreferences,
 	withAppAllowed,
 	withAppSeen,
+	type ClaudeCodeAlert,
 	type IncomingNotification,
 	type NotificationPreferences
 } from "./notificationPolicy";
@@ -24,7 +26,9 @@ const allowingChat: NotificationPreferences = {
 	allowedAppIds: ["Chat.App"],
 	seenApps: [{ id: "Chat.App", name: "Chat" }],
 	showText: true,
-	durationMs: 5000
+	durationMs: 5000,
+	claudeCodeNeedsInput: true,
+	claudeCodeDone: true
 };
 
 const readFrom = (stored: Record<string, string>) => (key: string) => stored[key];
@@ -38,7 +42,9 @@ describe("parseNotificationPreferences", () => {
 			allowedAppIds: [],
 			seenApps: [],
 			showText: true,
-			durationMs: 5000
+			durationMs: 5000,
+			claudeCodeNeedsInput: true,
+			claudeCodeDone: true
 		});
 	});
 
@@ -49,7 +55,9 @@ describe("parseNotificationPreferences", () => {
 				"zara-notifications-apps": JSON.stringify(["Chat.App", "Mail.App"]),
 				"zara-notifications-seen-apps": JSON.stringify([{ id: "Chat.App", name: "Chat" }]),
 				"zara-notifications-show-text": "false",
-				"zara-notifications-duration-ms": "8000"
+				"zara-notifications-duration-ms": "8000",
+				"zara-claude-code-alert-input": "false",
+				"zara-claude-code-alert-done": "false"
 			})
 		);
 
@@ -58,7 +66,9 @@ describe("parseNotificationPreferences", () => {
 			allowedAppIds: ["Chat.App", "Mail.App"],
 			seenApps: [{ id: "Chat.App", name: "Chat" }],
 			showText: false,
-			durationMs: 8000
+			durationMs: 8000,
+			claudeCodeNeedsInput: false,
+			claudeCodeDone: false
 		});
 	});
 
@@ -222,5 +232,117 @@ describe("decideNotification", () => {
 		expect(decision.pill?.body).toBe(HIDDEN_TEXT_BODY);
 		expect(JSON.stringify(decision.pill)).not.toContain("Maria");
 		expect(JSON.stringify(decision.pill)).not.toContain("free at 3");
+	});
+});
+
+const claudeFinished: ClaudeCodeAlert = {
+	kind: "done",
+	sessionId: "s1",
+	project: "zara",
+	excerpt: "Fixed the notch."
+};
+
+const claudeNeedsYou: ClaudeCodeAlert = {
+	kind: "needsInput",
+	sessionId: "s1",
+	project: "zara",
+	excerpt: "Claude needs your permission to use Bash"
+};
+
+describe("decideClaudeCodeAlert", () => {
+	it("says which project finished and what Claude said", () => {
+		const pill = decideClaudeCodeAlert(claudeFinished, allowingChat, { forceHideText: false }, -1);
+
+		expect(pill).toEqual({
+			id: -1,
+			appId: "claude-code",
+			appName: "Claude Code",
+			appIcon: null,
+			title: "zara finished",
+			body: "Fixed the notch."
+		});
+	});
+
+	it("says which project needs the user and why", () => {
+		const pill = decideClaudeCodeAlert(claudeNeedsYou, allowingChat, { forceHideText: false }, -2);
+
+		expect(pill?.title).toBe("zara needs you");
+		expect(pill?.body).toBe("Claude needs your permission to use Bash");
+	});
+
+	it("has no text line when Claude said nothing", () => {
+		const pill = decideClaudeCodeAlert(
+			{ ...claudeFinished, excerpt: null },
+			allowingChat,
+			{ forceHideText: false },
+			-3
+		);
+
+		expect(pill?.body).toBe("");
+	});
+
+	it("shows an alert even though Windows notifications are off", () => {
+		const pill = decideClaudeCodeAlert(
+			claudeFinished,
+			{ ...allowingChat, enabled: false, allowedAppIds: [] },
+			{ forceHideText: false },
+			-4
+		);
+
+		expect(pill).not.toBeNull();
+	});
+
+	it("shows nothing for a finished session when the user turned that alert off", () => {
+		const pill = decideClaudeCodeAlert(
+			claudeFinished,
+			{ ...allowingChat, claudeCodeDone: false },
+			{ forceHideText: false },
+			-5
+		);
+
+		expect(pill).toBeNull();
+	});
+
+	it("shows nothing for a session that needs the user when the user turned that alert off", () => {
+		const pill = decideClaudeCodeAlert(
+			claudeNeedsYou,
+			{ ...allowingChat, claudeCodeNeedsInput: false },
+			{ forceHideText: false },
+			-6
+		);
+
+		expect(pill).toBeNull();
+	});
+
+	it("still shows the other kind of alert when one is turned off", () => {
+		const pill = decideClaudeCodeAlert(
+			claudeNeedsYou,
+			{ ...allowingChat, claudeCodeDone: false },
+			{ forceHideText: false },
+			-7
+		);
+
+		expect(pill).not.toBeNull();
+	});
+
+	it("says only what happened, not which project or what was said, when the text is hidden", () => {
+		const pill = decideClaudeCodeAlert(
+			claudeFinished,
+			{ ...allowingChat, showText: false },
+			{ forceHideText: false },
+			-8
+		);
+
+		expect(pill?.title).toBe("Finished");
+		expect(pill?.body).toBe("");
+		expect(JSON.stringify(pill)).not.toContain("zara");
+		expect(JSON.stringify(pill)).not.toContain("Fixed the notch");
+	});
+
+	it("hides the text when told to, even though the user chose to show it", () => {
+		const pill = decideClaudeCodeAlert(claudeNeedsYou, allowingChat, { forceHideText: true }, -9);
+
+		expect(pill?.title).toBe("Needs your input");
+		expect(JSON.stringify(pill)).not.toContain("Bash");
 	});
 });

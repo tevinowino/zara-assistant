@@ -5,6 +5,10 @@
  * nothing: the feature is off until the user turns it on, and then no app may show a pill
  * until the user allows that app. Apps that have sent a notification are remembered by name
  * (never their text) so Settings can list them for the user to allow.
+ *
+ * Alerts from the Claude Code widget use the same pill and the same choice about showing text,
+ * but are the user's own sessions, so they need no per-app allowing: they appear when the
+ * widget is on and Claude Code is connected, unless the user turned that kind of alert off.
  */
 
 export const NOTIFICATION_SETTING_KEYS = {
@@ -12,7 +16,9 @@ export const NOTIFICATION_SETTING_KEYS = {
 	allowedApps: "zara-notifications-apps",
 	seenApps: "zara-notifications-seen-apps",
 	showText: "zara-notifications-show-text",
-	durationMs: "zara-notifications-duration-ms"
+	durationMs: "zara-notifications-duration-ms",
+	claudeCodeNeedsInput: "zara-claude-code-alert-input",
+	claudeCodeDone: "zara-claude-code-alert-done"
 } as const;
 
 /** An app that has sent a notification since the feature was turned on. */
@@ -32,6 +38,10 @@ export interface NotificationPreferences {
 	showText: boolean;
 	/** How long a pill stays, in milliseconds. */
 	durationMs: number;
+	/** Show a pill when a Claude Code session needs the user. */
+	claudeCodeNeedsInput: boolean;
+	/** Show a pill when a Claude Code session finishes. */
+	claudeCodeDone: boolean;
 }
 
 export const DEFAULT_NOTIFICATION_DURATION_MS = 5000;
@@ -80,7 +90,9 @@ export function parseNotificationPreferences(
 		allowedAppIds: [...new Set(allowedAppIds)],
 		seenApps: seenApps.slice(0, MAX_SEEN_APPS),
 		showText: read(NOTIFICATION_SETTING_KEYS.showText) !== "false",
-		durationMs: parseDuration(read(NOTIFICATION_SETTING_KEYS.durationMs))
+		durationMs: parseDuration(read(NOTIFICATION_SETTING_KEYS.durationMs)),
+		claudeCodeNeedsInput: read(NOTIFICATION_SETTING_KEYS.claudeCodeNeedsInput) !== "false",
+		claudeCodeDone: read(NOTIFICATION_SETTING_KEYS.claudeCodeDone) !== "false"
 	};
 }
 
@@ -164,5 +176,50 @@ export function decideNotification(
 			title: hideText ? incoming.appName : incoming.title,
 			body: hideText ? HIDDEN_TEXT_BODY : incoming.body
 		}
+	};
+}
+
+/** A Claude Code session needing the user, or finishing, as the backend sends it. */
+export interface ClaudeCodeAlert {
+	kind: "needsInput" | "done";
+	sessionId: string;
+	/** The project's folder name. */
+	project: string;
+	/** What Claude said, cut short; null if it said nothing. */
+	excerpt: string | null;
+}
+
+export const CLAUDE_CODE_APP_ID = "claude-code";
+export const CLAUDE_CODE_APP_NAME = "Claude Code";
+
+/**
+ * The pill for a Claude Code alert, or null if the user turned that kind of alert off. It
+ * names the project and says what happened; the text is what Claude said. With the text
+ * hidden it says only what happened ("Needs your input", "Finished"), not which project or
+ * what was said. `id` must differ from every other pill's.
+ */
+export function decideClaudeCodeAlert(
+	alert: ClaudeCodeAlert,
+	preferences: NotificationPreferences,
+	{ forceHideText }: DecisionContext,
+	id: number
+): PillNotification | null {
+	const wanted =
+		alert.kind === "needsInput" ? preferences.claudeCodeNeedsInput : preferences.claudeCodeDone;
+	if (!wanted) return null;
+
+	const hideText = forceHideText || !preferences.showText;
+	const happened = alert.kind === "needsInput" ? "needs you" : "finished";
+	return {
+		id,
+		appId: CLAUDE_CODE_APP_ID,
+		appName: CLAUDE_CODE_APP_NAME,
+		appIcon: null,
+		title: hideText
+			? alert.kind === "needsInput"
+				? "Needs your input"
+				: "Finished"
+			: `${alert.project} ${happened}`,
+		body: hideText ? "" : (alert.excerpt ?? "")
 	};
 }

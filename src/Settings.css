@@ -2816,3 +2816,40 @@ body {
 	text-decoration: underline;
 	cursor: pointer;
 }
+
+/* Connecting Claude Code: what will be added, shown before anything is written. */
+.claude-connect {
+	margin: 8px 0;
+	padding: 12px 14px;
+	border-radius: 14px;
+	background: var(--zara-group-bg, rgba(255, 255, 255, 0.06));
+	font-size: 12.5px;
+	line-height: 1.45;
+}
+
+.claude-connect p {
+	margin: 0 0 8px;
+}
+
+.claude-connect ul {
+	margin: 8px 0;
+	padding-left: 18px;
+}
+
+.claude-connect-preview {
+	max-height: 180px;
+	margin: 0;
+	padding: 8px 10px;
+	overflow: auto;
+	border-radius: 10px;
+	background: rgba(0, 0, 0, 0.25);
+	font-size: 11px;
+	line-height: 1.4;
+	white-space: pre;
+	user-select: text;
+}
+
+.claude-connect-actions {
+	display: flex;
+	gap: 8px;
+}

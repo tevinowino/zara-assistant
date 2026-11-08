@@ -13,6 +13,7 @@ import {
 	Calendar,
 	ClipboardList,
 	CloudSun,
+	FileCode,
 	Headphones,
 	Music,
 	SlidersHorizontal,
@@ -91,6 +92,14 @@ const DEFINITIONS = [
 		description:
 			"The words of the song that is playing, line by line. Asks lrclib.net for them, sending the song's name.",
 		icon: Music,
+		defaultEnabled: false
+	},
+	{
+		id: "claude-code",
+		label: "Claude Code",
+		description:
+			"What your Claude Code sessions are doing, with a pill when one needs you or finishes. Connect it in Settings first.",
+		icon: FileCode,
 		defaultEnabled: false
 	}
 ] as const satisfies readonly NotchPanelDefinitionInput[];

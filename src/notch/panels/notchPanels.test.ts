@@ -14,7 +14,7 @@ import {
 } from "./notchPanels";
 
 describe("NOTCH_PANEL_DEFINITIONS", () => {
-	it("lists the eight widgets", () => {
+	it("lists the nine widgets", () => {
 		expect(NOTCH_PANELS).toEqual([
 			"ai",
 			"calendar",
@@ -23,7 +23,8 @@ describe("NOTCH_PANEL_DEFINITIONS", () => {
 			"notes",
 			"clipboard",
 			"weather",
-			"lyrics"
+			"lyrics",
+			"claude-code"
 		]);
 	});
 

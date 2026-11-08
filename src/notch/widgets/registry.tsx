@@ -16,8 +16,15 @@ import type { ComponentType } from "react";
 import { isPanelEnabled, type NotchPanel, type NotchPanelPreferences } from "../panels/notchPanels";
 import { useClipboardMonitor } from "../clipboard/useClipboardHistory";
 import type { ZaraMode } from "../types";
+import { invoke } from "@tauri-apps/api/core";
+import { useEffect } from "react";
 import { useTrackLyrics } from "../lyrics/useTrackLyrics";
 import type { MediaSnapshot } from "../lyrics/lyricsTypes";
+import {
+	ClaudeCodePanel,
+	CLAUDE_CODE_PANEL_HEIGHT_PX,
+	CLAUDE_CODE_PANEL_WIDTH_PX
+} from "../views/ClaudeCodePanel";
 import { LyricsPanel, LYRICS_PANEL_HEIGHT_PX, LYRICS_PANEL_WIDTH_PX } from "../views/LyricsPanel";
 import {
 	ClipboardPanel,
@@ -73,6 +80,13 @@ function ClipboardBackground({ enabled }: WidgetBackgroundProps) {
 	return null;
 }
 
+function ClaudeCodeBackground({ enabled }: WidgetBackgroundProps) {
+	useEffect(() => {
+		invoke("claude_code_enable", { enabled }).catch(() => {});
+	}, [enabled]);
+	return null;
+}
+
 function LyricsBackground({ enabled, media }: WidgetBackgroundProps) {
 	useTrackLyrics(enabled, media);
 	return null;
@@ -100,6 +114,12 @@ export const WIDGET_VIEWS: Partial<Record<NotchPanel, NotchWidgetView>> = {
 		heightPx: LYRICS_PANEL_HEIGHT_PX,
 		Panel: LyricsPanel,
 		Background: LyricsBackground
+	},
+	"claude-code": {
+		widthPx: CLAUDE_CODE_PANEL_WIDTH_PX,
+		heightPx: CLAUDE_CODE_PANEL_HEIGHT_PX,
+		Panel: ClaudeCodePanel,
+		Background: ClaudeCodeBackground
 	}
 };
 

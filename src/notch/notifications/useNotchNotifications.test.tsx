@@ -256,3 +256,102 @@ describe("useNotchNotifications", () => {
 		expect(callsTo("notifications_enable")).toHaveLength(0);
 	});
 });
+
+describe("useNotchNotifications for Claude Code", () => {
+	const claudeFinished = {
+		kind: "done",
+		sessionId: "s1",
+		project: "zara",
+		excerpt: "Fixed the notch."
+	};
+
+	async function receiveClaudeAlert(alert: unknown) {
+		await act(async () => {
+			emitTauriEvent("claude-code-alert", alert);
+			await vi.advanceTimersByTimeAsync(0);
+		});
+	}
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+		localStorage.clear();
+		setInvokeHandler("load_settings", () => ({}));
+		setInvokeHandler("save_setting", () => undefined);
+		setInvokeHandler("notifications_enable", () => "allowed");
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it("shows a pill when a Claude Code session finishes, though Windows notifications are off", async () => {
+		const { result, setZaraMode } = renderNotificationsHook();
+		await flushListeners();
+
+		await receiveClaudeAlert(claudeFinished);
+
+		expect(result.current.notification).toMatchObject({
+			appName: "Claude Code",
+			title: "zara finished",
+			body: "Fixed the notch."
+		});
+		expect(setZaraMode).toHaveBeenCalledWith("notification");
+	});
+
+	it("shows a pill when a session needs the user", async () => {
+		const { result } = renderNotificationsHook();
+		await flushListeners();
+
+		await receiveClaudeAlert({
+			kind: "needsInput",
+			sessionId: "s1",
+			project: "zara",
+			excerpt: "Allow Bash?"
+		});
+
+		expect(result.current.notification?.title).toBe("zara needs you");
+	});
+
+	it("shows nothing for a kind of alert the user turned off", async () => {
+		localStorage.setItem("zara-claude-code-alert-done", "false");
+		const { result } = renderNotificationsHook();
+		await flushListeners();
+
+		await receiveClaudeAlert(claudeFinished);
+
+		expect(result.current.notification).toBeNull();
+	});
+
+	it("hides what Claude said while protection has lapsed", async () => {
+		const { result } = renderNotificationsHook({ protectionLapsed: true });
+		await flushListeners();
+
+		await receiveClaudeAlert(claudeFinished);
+
+		expect(result.current.notification?.title).toBe("Finished");
+		expect(JSON.stringify(result.current.notification)).not.toContain("Fixed the notch");
+	});
+
+	it("shows a Claude Code pill after a Windows one, not instead of it", async () => {
+		allowOnlyChat();
+		localStorage.setItem("zara-notifications-duration-ms", "3000");
+		const { result } = renderNotificationsHook();
+		await flushListeners();
+		await receive(messageFromMaria({ id: 1, title: "From Windows" }));
+
+		await receiveClaudeAlert(claudeFinished);
+		expect(result.current.notification?.title).toBe("From Windows");
+		await advance(3100);
+
+		expect(result.current.notification?.title).toBe("zara finished");
+	});
+
+	it("ignores Claude Code alerts in a window that is not the notch", async () => {
+		const { result } = renderNotificationsHook({ windowLabel: "settings" });
+		await flushListeners();
+
+		await receiveClaudeAlert(claudeFinished);
+
+		expect(result.current.notification).toBeNull();
+	});
+});
