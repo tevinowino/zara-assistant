@@ -1,4 +1,4 @@
-import { PanelTop, BellRing, Music, Minimize2, LayoutList, Sparkles, Circle, CloudSun, Timer, Archive, X } from "../icons/glyphs";
+import { PanelTop, MonitorSmartphone, BellRing, Music, Minimize2, LayoutList, Sparkles, Circle, CloudSun, Timer, Archive, X } from "../icons/glyphs";
 import { SegmentedControl } from "glisse";
 import { SettingRow } from "./SettingRow";
 import { SettingSlider } from "./SettingSlider";
@@ -19,6 +19,8 @@ import {
 interface NotchTabProps {
 	notchMode: string;
 	setNotchModeValue: (mode: string) => void;
+	notchFollowsCursor: boolean;
+	toggleNotchFollowsCursor: () => void;
 	notchEdgeDelay: number;
 	handleNotchEdgeDelayChange: (val: number) => void;
 	notchPanels: NotchPanelPreferences;
@@ -69,6 +71,8 @@ interface NotchTabProps {
 export function NotchTab({
 	notchMode,
 	setNotchModeValue,
+	notchFollowsCursor,
+	toggleNotchFollowsCursor,
 	notchEdgeDelay,
 	handleNotchEdgeDelayChange,
 	notchPanels,
@@ -131,6 +135,16 @@ export function NotchTab({
 						<option value="peek">Peek</option>
 					</select>
 				</SettingRow>
+
+				{notchMode !== "fixed" && (
+					<SettingRow
+						icon={MonitorSmartphone}
+						label="Follow Cursor"
+						desc="With more than one screen, move the notch to the screen the cursor rests at the top of"
+					>
+						<SettingSwitch checked={notchFollowsCursor} onToggle={toggleNotchFollowsCursor} />
+					</SettingRow>
+				)}
 
 				{notchMode !== "fixed" && (
 					<SettingRow

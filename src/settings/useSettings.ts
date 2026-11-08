@@ -128,6 +128,10 @@ export function useSettings() {
 		right: ["battery"]
 	});
 	const [notchMode, setNotchMode] = useState("fixed");
+	// On unless turned off; only Smart and Peek can follow, so Fixed ignores it.
+	const [notchFollowsCursor, setNotchFollowsCursor] = useState(
+		() => localStorage.getItem("zara-notch-follow-cursor") !== "false"
+	);
 	const [notchEdgeDelay, setNotchEdgeDelay] = useState(() => {
 		const val = localStorage.getItem("zara-notch-edge-delay");
 		return val !== null ? parseInt(val) : 200;
@@ -218,6 +222,7 @@ export function useSettings() {
 
 			apply(getVal("zara-notch-mode"), setNotchMode, (v) => (v === "auto-hide" ? "smart" : v));
 			apply(getVal("zara-notch-edge-delay"), setNotchEdgeDelay, parseInt);
+			apply(getVal("zara-notch-follow-cursor"), setNotchFollowsCursor, (v) => v !== "false");
 
 			const savedCity = getVal("zara-weather-city");
 			if (savedCity) setCityName(savedCity);
@@ -340,6 +345,7 @@ export function useSettings() {
 	useSettingsSync({
 		"zara-notch-mode": setNotchMode,
 		"zara-notch-edge-delay": setNotchEdgeDelay,
+		"zara-notch-follow-cursor": setNotchFollowsCursor,
 		"zara-weather-enabled": setWeatherEnabled,
 		[NOTCH_PANELS_SETTING_KEY]: (value: unknown) => setNotchPanels(parsePanelPreferences(value)),
 		[QUICK_APPS_SETTING_KEY]: (value: unknown) => setQuickApps(parseQuickApps(value)),
@@ -566,6 +572,12 @@ export function useSettings() {
 	};
 
 	// ── Value setters ──
+	const toggleNotchFollowsCursor = () => {
+		const next = !notchFollowsCursor;
+		setNotchFollowsCursor(next);
+		saveSetting("zara-notch-follow-cursor", String(next));
+	};
+
 	const setNotchModeValue = (newMode: string) => {
 		setNotchMode(newMode);
 		saveSetting("zara-notch-mode", newMode);
@@ -787,6 +799,8 @@ export function useSettings() {
 		// Notch
 		notchMode,
 		setNotchModeValue,
+		notchFollowsCursor,
+		toggleNotchFollowsCursor,
 		notchEdgeDelay,
 		handleNotchEdgeDelayChange,
 		notchPanels,

@@ -209,6 +209,8 @@ function SettingsApp() {
 							<NotchTab
 								notchMode={settings.notchMode}
 								setNotchModeValue={settings.setNotchModeValue}
+								notchFollowsCursor={settings.notchFollowsCursor}
+								toggleNotchFollowsCursor={settings.toggleNotchFollowsCursor}
 								notchEdgeDelay={settings.notchEdgeDelay}
 								handleNotchEdgeDelayChange={settings.handleNotchEdgeDelayChange}
 								notchPanels={settings.notchPanels}

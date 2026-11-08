@@ -10,6 +10,7 @@ mod commands;
 mod diagnostics;
 mod installed_apps;
 mod jack;
+mod notch_monitor;
 mod services;
 mod settings_window;
 mod shortcuts;

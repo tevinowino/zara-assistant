@@ -20,6 +20,7 @@ Edit `settings.json` with any text editor while Zara is running. Changes are app
 | Key                      | Type                             | Default   | Description                                                                                                                    |
 | ------------------------ | -------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `zara-notch-mode`       | `"fixed"` / `"smart"` / `"peek"` | `"fixed"` | Notch (top bar) visibility behavior. **peek** shows the notch briefly on media events and notifications.   |
+| `zara-notch-follow-cursor` | `"true"` / `"false"` | `"true"` | With more than one screen, whether a Smart or Peek notch moves to the screen the cursor rests at the top of. Fixed always stays on the primary screen. Set in Settings > Notch. |
 | `zara-notch-edge-delay` | milliseconds `"0"`–`"2000"`      | `"200"`   | In smart/peek mode, how long the cursor must rest against the top screen edge before the notch peeks. `"0"` reveals instantly. |
 
 ### Weather

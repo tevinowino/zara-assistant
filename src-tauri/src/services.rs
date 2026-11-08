@@ -753,8 +753,11 @@ pub fn setup_system_worker(app_handle: AppHandle) -> Sender<SystemCommand> {
             unsafe {
                 let now = Instant::now();
                 if now.duration_since(last_monitor_update) > Duration::from_millis(1000) {
-                    if let Some(m) = handle_visibility.primary_monitor().ok().flatten() {
-                        cached_scale = m.scale_factor();
+                    refresh_screens();
+                    if let Some(screen) =
+                        notch_screen().or_else(|| crate::notch_monitor::primary_monitor(&screens()))
+                    {
+                        cached_scale = screen.scale;
                         last_monitor_update = now;
                     }
                 }
@@ -926,7 +929,13 @@ pub fn setup_system_worker(app_handle: AppHandle) -> Sender<SystemCommand> {
 
                                 if GetMonitorInfoA(h_monitor, &mut mi).as_bool() {
                                     let screen_rect = mi.rcMonitor;
-                                    let is_primary = is_primary_monitor(mi.dwFlags);
+                                    // Only the screen the notch is on can be overlapped by what is
+                                    // in front; before the notch has a known screen, the primary one.
+                                    let on_notch_screen = notch_screen()
+                                        .map(|screen| {
+                                            screen.x == screen_rect.left && screen.y == screen_rect.top
+                                        })
+                                        .unwrap_or_else(|| is_primary_monitor(mi.dwFlags));
                                     let is_maximized =
                                         IsZoomed(hwnd).as_bool() || (style & WS_MAXIMIZE.0) != 0;
                                     let is_maximized_standard =
@@ -958,17 +967,20 @@ pub fn setup_system_worker(app_handle: AppHandle) -> Sender<SystemCommand> {
                                         && rect.bottom >= screen_rect.bottom;
 
                                     // Truly fullscreen means client covers screen, OR window matches screen but is not just a standard maximized window
-                                    current_is_fs = is_primary
+                                    current_is_fs = on_notch_screen
                                         && (is_client_fullscreen || is_matches_screen)
                                         && !is_maximized_standard;
 
-                                    if is_primary && (current_is_fs || is_maximized) {
+                                    if on_notch_screen && (current_is_fs || is_maximized) {
                                         should_notch_overlap = true;
-                                    } else if is_primary {
+                                    } else if on_notch_screen {
                                         if let Ok(notch_rect_lock) = NOTCH_RECT.lock() {
                                             if let Some(nr) = *notch_rect_lock {
                                                 let scale = cached_scale;
-                                                let n_left = (nr.x as f64 * scale) as i32;
+                                                // `nr` is in the notch window's own pixels; the window starts
+                                                // at the left edge of its screen.
+                                                let n_left =
+                                                    screen_rect.left + (nr.x as f64 * scale) as i32;
                                                 let n_right =
                                                     n_left + (nr.width as f64 * scale) as i32;
                                                 let res_h = (36.0 * scale) as i32;
@@ -1433,6 +1445,126 @@ const TOP_EDGE_POLL_MS: u64 = 40;
 static MH_TOP_EDGE_ENTER_MS: AtomicI64 = AtomicI64::new(0);
 static MH_TOP_EDGE_ARMED: AtomicBool = AtomicBool::new(false);
 
+/// Every screen, as last read from Windows. Refreshed about once a second by the cursor and
+/// overlap loops and when the displays change.
+static SCREENS: Mutex<Vec<crate::notch_monitor::MonitorRect>> = Mutex::new(Vec::new());
+
+/// Counts moves of the notch between screens, so a delayed correction of one move cannot
+/// undo a later move.
+static NOTCH_MOVES: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+fn refresh_screens() {
+    let found = crate::notch_monitor::list_monitors();
+    if found.is_empty() {
+        return;
+    }
+    if let Ok(mut screens) = SCREENS.lock() {
+        *screens = found;
+    }
+}
+
+fn screens() -> Vec<crate::notch_monitor::MonitorRect> {
+    if SCREENS.lock().map(|screens| screens.is_empty()).unwrap_or(true) {
+        refresh_screens();
+    }
+    SCREENS.lock().map(|screens| screens.clone()).unwrap_or_default()
+}
+
+/// The screen the notch window is on, from where it was last placed.
+fn notch_screen() -> Option<crate::notch_monitor::MonitorRect> {
+    let origin = MAIN_WINDOW_RECT
+        .lock()
+        .ok()
+        .and_then(|rect| *rect)
+        .map(|(position, _)| (position.x, position.y))?;
+    crate::notch_monitor::monitor_of_window(&screens(), origin)
+}
+
+/// Whether the notch follows the cursor from screen to screen. Only Smart and Peek can: Fixed
+/// reserves a strip of the primary screen for the notch and so stays there. Turned off with
+/// `zara-notch-follow-cursor` = "false".
+/// The screen the notch belongs on in `mode`: the primary screen for Fixed, which reserves its
+/// strip there, otherwise where it is now (the primary screen if that is not known).
+pub fn screen_for_notch_mode(mode: &str) -> Option<crate::notch_monitor::MonitorRect> {
+    let primary = || crate::notch_monitor::primary_monitor(&screens());
+    if mode == "fixed" {
+        primary()
+    } else {
+        notch_screen().or_else(primary)
+    }
+}
+
+fn notch_follows_cursor(app_handle: &AppHandle) -> bool {
+    !notch_mode_reserves_work_area(get_setting_str(app_handle, "zara-notch-mode").as_deref())
+        && get_setting_str(app_handle, "zara-notch-follow-cursor").as_deref() != Some("false")
+}
+
+/// Puts the notch window on `target`: the screen's top-left corner, its full width, and a
+/// height at that screen's own scale. The toolkit can resize a window again once it has
+/// noticed a change of display scale, so the placement is checked a moment later.
+fn move_notch_to(app_handle: &AppHandle, target: crate::notch_monitor::MonitorRect) {
+    let Some(main_win) = app_handle.get_webview_window("main") else {
+        return;
+    };
+    let zoom = crate::utils::get_zara_scale(app_handle);
+    let (x, y, width, height) =
+        crate::notch_monitor::notch_window_rect(target, crate::utils::NOTCH_WINDOW_HEIGHT, zoom);
+    let place = {
+        let main_win = main_win.clone();
+        move || {
+            let _ = main_win.set_position(tauri::PhysicalPosition::new(x, y));
+            let _ = main_win.set_size(tauri::PhysicalSize::new(width, height));
+            if let Ok(mut rect) = MAIN_WINDOW_RECT.lock() {
+                *rect = Some((
+                    tauri::PhysicalPosition::new(x, y),
+                    tauri::PhysicalSize::new(width, height),
+                ));
+            }
+        }
+    };
+    place();
+    if let Ok(hwnd) = main_win.hwnd() {
+        re_assert_topmost(hwnd);
+    }
+    // The window left from under the pointer, so the webview will not see it leave.
+    if NOTCH_IS_HOVERED.swap(false, Ordering::Relaxed) {
+        let _ = app_handle.emit("notch-pointer-left", ());
+    }
+    crate::diagnostics::record(
+        "notch_follow",
+        &format!("to={x},{y} size={width}x{height} scale={}", target.scale),
+    );
+
+    let this_move = NOTCH_MOVES.fetch_add(1, Ordering::Relaxed) + 1;
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(150)).await;
+        if NOTCH_MOVES.load(Ordering::Relaxed) != this_move {
+            return;
+        }
+        let placed = main_win
+            .outer_position()
+            .ok()
+            .zip(main_win.outer_size().ok())
+            .is_some_and(|(at, size)| {
+                at.x == x && at.y == y && size.width == width && size.height == height
+            });
+        if !placed {
+            place();
+        }
+    });
+}
+
+/// After the displays change: a notch left on a screen that is gone goes back to the primary one.
+fn keep_notch_on_a_screen(app_handle: &AppHandle) {
+    refresh_screens();
+    if notch_screen().is_some() {
+        return;
+    }
+    if let Some(primary) = crate::notch_monitor::primary_monitor(&screens()) {
+        move_notch_to(app_handle, primary);
+    }
+}
+
 /// Physical bounds `(x, y, width, height)` of the expanded per-app volume
 /// mixer (notch + panel), if it is open. The frontend reports the card in
 /// overlay CSS pixels; scale and monitor offset convert it to virtual-desktop
@@ -1611,6 +1743,7 @@ pub fn setup_mouse_hook(app_handle: AppHandle) {
     if MOUSE_HOOK_UPDATES.set(updates).is_err() {
         return;
     }
+    refresh_screens();
     setup_volume_mixer_watchdog(app_handle.clone());
     setup_top_edge_watchdog(app_handle.clone());
     std::thread::Builder::new()
@@ -1748,24 +1881,27 @@ fn top_edge_dwell_ms(app_handle: &AppHandle) -> i64 {
         .clamp(0, 2000)
 }
 
-/// True when the cursor sits inside the top-edge hot band on the primary
-/// monitor. Shared by the dwell gate and top-edge hit-testing continuity.
-fn in_top_edge_band(cursor: windows::Win32::Foundation::POINT, scale: f64) -> bool {
-    let (mon_x, mon_y) = MH_CACHED_MON_POS
-        .lock()
-        .ok()
-        .and_then(|g| *g)
-        .unwrap_or((0, 0));
-    let mon_w = MH_CACHED_MON_SIZE
-        .lock()
-        .ok()
-        .and_then(|g| *g)
-        .map(|s| s.0 as i32)
-        .unwrap_or(1920);
+/// The screen whose top-edge hot band the cursor is in, when that counts as asking for the
+/// notch: any screen if the notch follows the cursor, otherwise only the notch's own screen.
+fn edge_screen_under(
+    cursor: windows::Win32::Foundation::POINT,
+    follow: bool,
+) -> Option<crate::notch_monitor::MonitorRect> {
+    crate::notch_monitor::edge_screen(
+        &screens(),
+        (cursor.x, cursor.y),
+        TOP_EDGE_BAND_PX,
+        follow,
+        notch_screen(),
+    )
+}
 
-    cursor.y <= (mon_y + (TOP_EDGE_BAND_PX * scale) as i32)
-        && cursor.x >= mon_x
-        && cursor.x <= (mon_x + mon_w)
+/// True when the cursor is in the top-edge band of the screen the notch is on. Hit-testing
+/// continuity near the notch uses this, so it never reaches for another screen.
+fn in_notch_screen_top_band(cursor: windows::Win32::Foundation::POINT) -> bool {
+    notch_screen().is_some_and(|screen| {
+        screen.top_band_contains((cursor.x, cursor.y), TOP_EDGE_BAND_PX)
+    })
 }
 
 /// True once the cursor has stayed inside the top band long enough to count as
@@ -1780,9 +1916,9 @@ fn top_edge_armed_for(
     app_handle: &AppHandle,
     cursor: windows::Win32::Foundation::POINT,
     now: i64,
-    scale: f64,
+    follow: bool,
 ) -> bool {
-    if !in_top_edge_band(cursor, scale) {
+    if edge_screen_under(cursor, follow).is_none() {
         MH_TOP_EDGE_ENTER_MS.store(0, Ordering::Relaxed);
         MH_TOP_EDGE_ARMED.store(false, Ordering::Relaxed);
         return false;
@@ -1853,15 +1989,29 @@ fn update_main_interaction(
     // dwell-gated, and fixed mode (always visible) skips it entirely. This is
     // about showing the notch — the hit-testing continuity below is separate
     // and must stay immediate.
-    let edge_armed = if notch_mode_reserves_work_area(
+    let reserves_work_area = notch_mode_reserves_work_area(
         get_setting_str(app_handle, "zara-notch-mode").as_deref(),
-    ) {
+    );
+    let follow = notch_follows_cursor(app_handle);
+    let edge_armed = if reserves_work_area {
         MH_TOP_EDGE_ENTER_MS.store(0, Ordering::Relaxed);
         MH_TOP_EDGE_ARMED.store(false, Ordering::Relaxed);
         false
     } else {
-        top_edge_armed_for(app_handle, cursor, now, scale)
+        top_edge_armed_for(app_handle, cursor, now, follow)
     };
+
+    // The cursor has rested at the top of another screen: bring the notch there. The rest of
+    // this update would run against the old screen's geometry, so it waits for the next one
+    // (the watchdog runs every 40 ms).
+    if edge_armed && follow {
+        if let Some(target) = edge_screen_under(cursor, true) {
+            if Some(target) != notch_screen() {
+                move_notch_to(app_handle, target);
+                return;
+            }
+        }
+    }
 
     let mut is_notch_hovered = false;
     if edge_armed || in_notch_hover {
@@ -1913,7 +2063,7 @@ fn update_main_interaction(
                 // the notch being on screen (or a live hover) so a hidden
                 // notch still can't swallow pass-by clicks.
                 let edge_pad = (60.0 * scale) as i32;
-                let in_top_span = in_top_edge_band(cursor, scale)
+                let in_top_span = in_notch_screen_top_band(cursor)
                     && cursor.x >= rx - edge_pad
                     && cursor.x <= rx + rw + edge_pad;
 
@@ -2035,6 +2185,7 @@ fn process_mouse_position(app_handle: &AppHandle, cursor: windows::Win32::Founda
 
         // Refresh cached monitor info every 1s
         if now - MH_LAST_MONITOR_UPDATE_MS.load(Ordering::Relaxed) > 1000 {
+            refresh_screens();
             if let Ok(Some(monitor)) = app_handle.primary_monitor() {
                 let pos = *monitor.position();
                 let size = *monitor.size();
@@ -2405,6 +2556,7 @@ fn reposition_all_windows(app_handle: &AppHandle) {
     if SHUTTING_DOWN.load(Ordering::Relaxed) {
         return;
     }
+    keep_notch_on_a_screen(app_handle);
     reconcile_main_appbar(app_handle);
     sync_overlays(app_handle);
     // A display change or wake from sleep can drop the capture-exclusion flag.
