@@ -73,6 +73,14 @@ Windows notifications shown in the notch as a pill. Off until the user turns it 
 | `zara-notifications-seen-apps` | JSON array of `{ "id", "name" }` | `[]` | Apps that have sent a notification, remembered by name only so Settings can list them. Written by Zara; the text of a notification is never saved. At most 40. |
 | `zara-notifications-show-text` | `"true"` / `"false"` | `"true"` | Show the notification's title and text in the pill. `"false"` shows only the app's name. The text is also hidden while Stealth is switched on but not holding. |
 | `zara-notifications-duration-ms` | milliseconds | `"5000"` | How long a pill stays. Kept between 2000 and 15000. |
+### Lyrics
+
+The Lyrics widget (turned on with the other widgets in Settings > Notch). Each new track's artist, title and length are sent to lrclib.net, and only while the widget is on. See `docs/privacy.md`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `zara-lyrics-offset-ms` | milliseconds | `"0"` | How far the lyrics are moved to fit the player: positive shows each line sooner, negative later. Changed with the +/- buttons in the Lyrics panel, in steps of 250, between -5000 and 5000. |
+
 ### Shelf
 
 | Key                   | Type                 | Default   | Description                                                                                                    |

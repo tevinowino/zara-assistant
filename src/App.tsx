@@ -1356,7 +1356,11 @@ function App() {
 	return (
 		<div className="screen" style={{ overflow: "hidden" }}>
 			<AiSessionHost store={aiSessionStore} resumeLast={rememberPanelEnabled} />
-			<WidgetBackgrounds preferences={panelPreferences} active={windowLabel === "main"} />
+			<WidgetBackgrounds
+				preferences={panelPreferences}
+				active={windowLabel === "main"}
+				media={{ mediaInfo, isPlaying }}
+			/>
 			{/* Screen Corners (Top) */}
 			<AnimatePresence>
 				{isVisible && settingsCornersEnabled && (
@@ -1885,6 +1889,8 @@ function App() {
 									zaraMode={zaraMode}
 									onFieldFocusChange={setFieldFocused}
 									timeFormat24h={timeFormat24h}
+									media={{ mediaInfo, isPlaying }}
+									askZara={askZara}
 								/>
 
 								{/* Command Center Panel */}

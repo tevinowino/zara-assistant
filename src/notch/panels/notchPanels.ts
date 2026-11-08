@@ -14,6 +14,7 @@ import {
 	ClipboardList,
 	CloudSun,
 	Headphones,
+	Music,
 	SlidersHorizontal,
 	Sparkles,
 	StickyNote,
@@ -82,6 +83,14 @@ const DEFINITIONS = [
 		label: "Weather",
 		description: "The forecast for the next hours and days.",
 		icon: CloudSun,
+		defaultEnabled: false
+	},
+	{
+		id: "lyrics",
+		label: "Lyrics",
+		description:
+			"The words of the song that is playing, line by line. Asks lrclib.net for them, sending the song's name.",
+		icon: Music,
 		defaultEnabled: false
 	}
 ] as const satisfies readonly NotchPanelDefinitionInput[];

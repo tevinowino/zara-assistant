@@ -17,6 +17,7 @@ webview's allowed hosts in line with this list.
 
 | Host | Used for | What is sent |
 |---|---|---|
+| `lrclib.net` | The Lyrics widget, once for each song that plays while the widget is on (Settings > Notch > Widgets). Off by default | The song's artist, title and length, as the player reports them, in the address of the request. LRCLIB sees your IP address and the request, like any website. The answer is kept in `lyrics-cache` so the same song is not asked about again; "no lyrics" is asked about again after a day |
 | `github.com` (the project's releases) | Checking for a new version of Zara and downloading it, shortly after startup and when you press "Check now" in Settings > About. Off with "Check automatically" (`zara-auto-update-check`). Asks you before installing | A request for a public file (`latest.json`), then for the installer if you accept. GitHub sees your IP address and the request, like any download. Nothing about you or your settings is sent. The installer is verified against a public key built into Zara before it runs |
 | The AI service you choose in Settings > Assistant: `openrouter.ai` (the default), `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`, `integrate.api.nvidia.com`, `api.groq.com`, `api.mistral.ai`, `api.x.ai`, `api.deepseek.com`, an Ollama server on this PC, or an address you type | The assistant, and listing the models a service offers | Your messages, recent conversation history, your saved memories and notes when relevant, and a screenshot when you ask Zara to look at your screen. A service that resells models (OpenRouter) forwards the request to the provider hosting the model, so that provider sees it too. Each service has its own terms for how it handles and may use what you send; check the one you pick. The API key is sent in a request header to that service only, never in the URL |
 | The search provider OpenRouter uses (Exa unless OpenRouter chooses otherwise) | Web search, only when the assistant decides a question needs it and Settings > Assistant > "Let Zara search the web" is on | Your question, as the search query. OpenRouter runs the search and adds the results to the request. Each search costs about a cent on your OpenRouter account |
@@ -36,6 +37,7 @@ If you turn on "Notification Pill" in Settings > Notch, Zara asks Windows for pe
 ## Stored on this PC
 
 - Settings: `%APPDATA%\com.zara.app\settings.json`
+- Lyrics already looked up: JSON files in `%APPDATA%\com.zara.app\lyrics-cache\` (the newest 300 songs; delete the folder to clear it)
 - Notes, conversations, memories and shortcut choices: JSON files in `%APPDATA%\com.zara.app\ai\`
 - API keys, one per service: Windows Credential Manager, never a file. The chosen service, model, fallback model and any server address are in `settings.json` (they are not secrets)
 - Diagnostics log: `%LOCALAPPDATA%\com.zara.app\diagnostics.log` (rotated at 1 MB, must never contain secrets)

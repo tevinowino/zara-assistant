@@ -1,0 +1,188 @@
+/* The lyrics widget (see views/LyricsPanel.tsx). */
+
+.lyrics-panel {
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	padding: 4px 16px 14px;
+	color: var(--zara-text, white);
+	border-radius: 0 0 18px 18px;
+	overflow: hidden;
+	white-space: normal;
+	text-align: left;
+}
+
+.lyrics-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding-bottom: 6px;
+}
+
+.lyrics-song {
+	min-width: 0;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.lyrics-sync {
+	display: inline-flex;
+	align-items: center;
+	flex: none;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.08);
+}
+
+.lyrics-sync button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 24px;
+	height: 22px;
+	padding: 0 6px;
+	border: none;
+	border-radius: 999px;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+	opacity: 0.8;
+}
+
+.lyrics-sync button:hover {
+	opacity: 1;
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.lyrics-message {
+	margin: auto;
+	text-align: center;
+	font-size: 13px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.lyrics-retry {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+	padding: 5px 12px;
+	border: none;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.12);
+	color: inherit;
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.lyrics-lines,
+.lyrics-plain {
+	flex: 1;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	overflow-y: auto;
+	list-style: none;
+	scrollbar-width: thin;
+	/* Room above and below so the first and last lines can sit in the middle. */
+	padding-block: 70px;
+}
+
+.lyrics-plain {
+	padding-block: 4px;
+	font-size: 14px;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.lyrics-line {
+	margin: 0;
+}
+
+.lyrics-line button {
+	display: block;
+	width: 100%;
+	padding: 5px 6px;
+	border: none;
+	border-radius: 10px;
+	background: none;
+	color: rgba(255, 255, 255, 0.4);
+	font: inherit;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.3;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		color 0.25s ease,
+		transform 0.25s ease,
+		background 0.15s ease;
+	transform-origin: left center;
+}
+
+.lyrics-line button:hover {
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.lyrics-line.active button {
+	color: #fff;
+	transform: scale(1.04);
+}
+
+.lyrics-line.selected button {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.lyrics-break {
+	display: block;
+	padding: 4px 6px;
+	color: rgba(255, 255, 255, 0.25);
+}
+
+.lyrics-line.active .lyrics-break {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.lyrics-actions {
+	display: flex;
+	gap: 8px;
+	padding-top: 8px;
+}
+
+.lyrics-actions button {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border: none;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.14);
+	color: inherit;
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.lyrics-actions button:hover:not(:disabled) {
+	background: rgba(255, 255, 255, 0.22);
+}
+
+.lyrics-actions button:disabled {
+	opacity: 0.7;
+	cursor: default;
+}

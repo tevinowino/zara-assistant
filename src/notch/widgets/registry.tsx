@@ -16,6 +16,9 @@ import type { ComponentType } from "react";
 import { isPanelEnabled, type NotchPanel, type NotchPanelPreferences } from "../panels/notchPanels";
 import { useClipboardMonitor } from "../clipboard/useClipboardHistory";
 import type { ZaraMode } from "../types";
+import { useTrackLyrics } from "../lyrics/useTrackLyrics";
+import type { MediaSnapshot } from "../lyrics/lyricsTypes";
+import { LyricsPanel, LYRICS_PANEL_HEIGHT_PX, LYRICS_PANEL_WIDTH_PX } from "../views/LyricsPanel";
 import {
 	ClipboardPanel,
 	CLIPBOARD_PANEL_HEIGHT_PX,
@@ -39,11 +42,17 @@ export interface WidgetPanelProps {
 	onFieldFocusChange: (focused: boolean) => void;
 	/** Whether hours are shown on a 24-hour clock. */
 	timeFormat24h: boolean;
+	/** What is playing. */
+	media: MediaSnapshot;
+	/** Sends a question to the assistant and opens it. */
+	askZara: (question: string) => void;
 }
 
 export interface WidgetBackgroundProps {
 	/** Whether the widget is on, in the notch window. Work must stop when this is false. */
 	enabled: boolean;
+	/** What is playing. */
+	media: MediaSnapshot;
 }
 
 export interface NotchWidgetView {
@@ -64,6 +73,11 @@ function ClipboardBackground({ enabled }: WidgetBackgroundProps) {
 	return null;
 }
 
+function LyricsBackground({ enabled, media }: WidgetBackgroundProps) {
+	useTrackLyrics(enabled, media);
+	return null;
+}
+
 export const WIDGET_VIEWS: Partial<Record<NotchPanel, NotchWidgetView>> = {
 	notes: {
 		widthPx: NOTES_PANEL_WIDTH_PX,
@@ -80,6 +94,12 @@ export const WIDGET_VIEWS: Partial<Record<NotchPanel, NotchWidgetView>> = {
 		widthPx: WEATHER_PANEL_WIDTH_PX,
 		heightPx: WEATHER_PANEL_HEIGHT_PX,
 		Panel: WeatherPanel
+	},
+	lyrics: {
+		widthPx: LYRICS_PANEL_WIDTH_PX,
+		heightPx: LYRICS_PANEL_HEIGHT_PX,
+		Panel: LyricsPanel,
+		Background: LyricsBackground
 	}
 };
 
@@ -108,15 +128,21 @@ export interface WidgetBackgroundsProps {
 	preferences: NotchPanelPreferences;
 	/** False in every window but the notch itself, where no widget may work in the background. */
 	active: boolean;
+	/** What is playing. */
+	media: MediaSnapshot;
 }
 
 /** The background work of every widget that has some, running only for the ones that are on. */
-export function WidgetBackgrounds({ preferences, active }: WidgetBackgroundsProps) {
+export function WidgetBackgrounds({ preferences, active, media }: WidgetBackgroundsProps) {
 	return (
 		<>
 			{WIDGET_VIEW_ENTRIES.map(([panel, { Background }]) =>
 				Background ? (
-					<Background key={panel} enabled={active && isPanelEnabled(preferences, panel)} />
+					<Background
+						key={panel}
+						enabled={active && isPanelEnabled(preferences, panel)}
+						media={media}
+					/>
 				) : null
 			)}
 		</>
