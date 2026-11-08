@@ -5,6 +5,7 @@ mod autostart_repair;
 mod battery;
 mod bluetooth;
 mod buds;
+mod claude_code;
 mod clipboard_history;
 mod commands;
 mod diagnostics;
@@ -222,6 +223,12 @@ fn main() {
             ai::note_delete,
             stall_probe::record_diagnostic,
             clipboard_history::clipboard_history_enable,
+            claude_code::claude_code_enable,
+            claude_code::claude_code_sessions,
+            claude_code::claude_code_connection,
+            claude_code::claude_code_hooks_preview,
+            claude_code::claude_code_connect,
+            claude_code::claude_code_disconnect,
             lyrics::lyrics_for_track,
             notifications::notifications_enable,
             notifications::open_notification_privacy_settings,

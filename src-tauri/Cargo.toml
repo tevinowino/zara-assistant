@@ -22,7 +22,9 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2.11", features = ["tray-icon", "image-png"] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+# preserve_order keeps the order of the keys in settings files Zara edits but does not own
+# (Claude Code's settings.json), instead of sorting them.
+serde_json = { version = "1", features = ["preserve_order"] }
 windows-core = "0.61"
 windows-collections = "0.2"
 windows = { version = "0.61", features = [
