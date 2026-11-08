@@ -26,7 +26,7 @@ import { WifiPanel } from "./components/WifiPanel";
 import { BluetoothPanel } from "./components/BluetoothPanel";
 import { DeviceArtDefs } from "./devices/DeviceArt";
 
-import { ConnectedDevicesPanel } from "./components/ConnectedDevicesPanel";
+import { ConnectedDevicesPanel, DEVICES_PANEL_WIDTH_PX } from "./components/ConnectedDevicesPanel";
 import { AiSessionHost, createAiSessionStore, useAiSessionSelector } from "./ai/aiSessionStore";
 import { ASK_BAR_ROW_HEIGHT } from "./ai/AskBar";
 import { loadAiPanel, preloadAiPanelWhenIdle } from "./ai/loadAiPanel";
@@ -92,9 +92,9 @@ import { ShelfBubble } from "./notch/views/ShelfBubble";
 import { useStartupUpdateOffer } from "./updates/useStartupUpdateOffer";
 
 // The Connected devices panel grows with its list between these heights;
-// the maximum is the size the panel had before it grew to fit.
+// past the maximum the list scrolls.
 const DEVICES_MIN_HEIGHT = 150;
-const DEVICES_MAX_HEIGHT = 300;
+const DEVICES_MAX_HEIGHT = 400;
 
 /** How long an open notch waits after the pointer leaves it before it closes. */
 const NOTCH_CLOSE_DELAY_MS = 1200;
@@ -1246,7 +1246,8 @@ function App() {
 		if (zaraMode === "weather") return WEATHER_PANEL_WIDTH_PX;
 		if (zaraMode === "clipboard") return CLIPBOARD_PANEL_WIDTH_PX;
 		if (zaraMode === "command-center" && isOpen) return COMMAND_CENTER_PANEL_WIDTH_PX;
-		if (zaraMode === "wifi" || zaraMode === "bluetooth" || zaraMode === "devices") return 350;
+		if (zaraMode === "devices") return DEVICES_PANEL_WIDTH_PX;
+		if (zaraMode === "wifi" || zaraMode === "bluetooth") return 350;
 		if (showMusicOnStatusHover) {
 			return 170 + (settingsVisualizerEnabled ? 30 : 0);
 		}

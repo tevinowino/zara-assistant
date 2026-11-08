@@ -44,6 +44,11 @@ if (!window.matchMedia) {
 // checks for one (the thinking orb) skip drawing without jsdom logging an error.
 window.HTMLCanvasElement.prototype.getContext = () => null;
 
+// jsdom does not measure SVG paths; the device drawings that animate a stroke ask for a length.
+if (!("getTotalLength" in SVGElement.prototype)) {
+	Object.defineProperty(SVGElement.prototype, "getTotalLength", { value: () => 0 });
+}
+
 // jsdom has no pointer capture; Glisse (switches, sliders) captures the pointer on press.
 const capturedPointerIds = new WeakMap<Element, Set<number>>();
 Element.prototype.setPointerCapture = function setPointerCapture(pointerId: number) {

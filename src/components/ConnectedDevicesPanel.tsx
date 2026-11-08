@@ -11,13 +11,16 @@ import {
 } from "../devices/deviceLooks";
 import { isWiredAudio, usbArtFor, usbDisplayName } from "../devices/usbArtFor";
 import {
+	cardShapeInGroup,
 	groupDevices,
+	urgentLevel,
 	type BudLevel,
 	type BudsBattery,
 	type DeviceEntry
 } from "../devices/connectedDevices";
 import type { ConnectedDevicesState, PcBattery } from "../hooks/useConnectedDevices";
 import "./QuickPanel.css";
+import "./ConnectedDevices.css";
 
 interface ConnectedDevicesPanelProps {
 	data: ConnectedDevicesState;
@@ -33,6 +36,9 @@ interface ConnectedDevicesPanelProps {
 	 */
 	onContentHeight?: (height: number) => void;
 }
+
+/** The width of the notch while it shows the connected devices: two tiles side by side. */
+export const DEVICES_PANEL_WIDTH_PX = 392;
 
 /** Room for the loading spinner or the empty message. */
 const EMPTY_BODY_HEIGHT = 72;
@@ -52,15 +58,36 @@ function pcStatus(pc: PcBattery): string {
 	return pc.seconds_left ? `${duration(pc.seconds_left)} left` : "On battery";
 }
 
-/** One level: its percent over a thin bar, green, or red when low. */
-function Meter({ label, part, low }: { label?: string; part: BudLevel; low: boolean }) {
+/**
+ * One battery level: its percent over a bar that fills to it. The bar is the text colour,
+ * green while charging and red when low, as on the command center's sliders. Described
+ * once, in words, so assistive technology does not read the percent twice.
+ */
+function Level({
+	part,
+	low,
+	label,
+	large
+}: {
+	part: BudLevel;
+	low: boolean;
+	label?: string;
+	large?: boolean;
+}) {
+	const state = part.charging ? " charging" : low ? " low" : "";
 	return (
-		<div className={`bh-meter${low ? " low" : ""}${part.charging ? " charging" : ""}`}>
-			<span className="bh-meter-value">
-				{label && <span className="bh-meter-label">{label}</span>}
-				{part.level}%{part.charging && <Zap className="bh-meter-bolt" />}
+		<div
+			className={`cd-level${state}${large ? " large" : ""}`}
+			role="img"
+			aria-label={`${label ? `${label}, ` : ""}${part.level}%${part.charging ? ", charging" : low ? ", low" : ""}`}
+		>
+			<span className="cd-level-value" aria-hidden="true">
+				{label && <span className="cd-level-label">{label}</span>}
+				{part.charging && <Zap className="cd-level-bolt" />}
+				{part.level}
+				<span className="cd-level-unit">%</span>
 			</span>
-			<span className="bh-meter-bar">
+			<span className="cd-level-bar" aria-hidden="true">
 				<span style={{ width: `${Math.max(4, part.level)}%` }} />
 			</span>
 		</div>
@@ -164,27 +191,22 @@ export function ConnectedDevicesPanel({
 			if (entry.buds.right) parts.push(["R", entry.buds.right]);
 			if (entry.buds.case) parts.push(["Case", entry.buds.case]);
 			return (
-				<div className="bh-meters">
+				<div className="cd-levels">
 					{parts.map(([label, part]) => (
-						<Meter key={label} label={label} part={part} low={isLow(part)} />
+						<Level key={label} label={label} part={part} low={isLow(part)} />
 					))}
 				</div>
 			);
 		}
-		if (entry.level === null)
-			return entry.wired ? null : <span className="bh-unknown">No battery info</span>;
+		if (entry.level === null) return null;
 		const part = { level: entry.level, charging: entry.charging };
-		return (
-			<div className="bh-meters">
-				<Meter part={part} low={isLow(part)} />
-			</div>
-		);
+		return <Level part={part} low={isLow(part)} large />;
 	};
 
 	const subText = (entry: DeviceEntry) => {
 		if (entry.kind === "pc" && pc) return pcStatus(pc);
 		if (entry.wired) return entry.id === "jack" ? "Headphone jack" : "USB";
-		if (entry.buds) return "Each bud and the case";
+		if (entry.level === null && !entry.buds) return "Connected \u00b7 no battery info";
 		return "Connected";
 	};
 
@@ -194,7 +216,7 @@ export function ConnectedDevicesPanel({
 		const looks = entry.wired ? WIRED_DEVICE_LOOKS : DEVICE_LOOKS;
 		const guess = guessFor(entry);
 		return (
-			<div className="qp-chips bh-looks" role="radiogroup" aria-label="Looks like">
+			<div className="qp-chips cd-looks" role="radiogroup" aria-label="Looks like">
 				<span className="qp-note">Looks like</span>
 				{looks.map((look) => (
 					<button
@@ -250,20 +272,33 @@ export function ConnectedDevicesPanel({
 		return () => observer.disconnect();
 	});
 
+	const connectedCount = groups.reduce((total, group) => total + group.entries.length, 0);
+	const lowestLevel = groups
+		.flatMap((group) => group.entries)
+		.map(urgentLevel)
+		.filter((level): level is number => level !== null)
+		.reduce<number | null>((lowest, level) => (lowest === null ? level : Math.min(lowest, level)), null);
+
 	// Lay out against the final height; the expanding shell clips the reveal.
 	// Otherwise its intermediate heights briefly make a fitting list scroll.
 	return (
 		<div
 			ref={panelRef}
-			className="qp bh"
+			className="qp cd"
 			style={{ height: height - 36 }}
 			onClick={(e) => e.stopPropagation()}
 		>
-			<div ref={headerRef} className="qp-header">
-				<span className="qp-row-icon bh-title-icon">
+			<div ref={headerRef} className="cd-header">
+				<span className="cd-header-icon">
 					<MonitorSmartphone />
 				</span>
-				<span className="qp-title">Connected devices</span>
+				<span className="cd-title">Connected devices</span>
+				{connectedCount > 0 && (
+					<span className="cd-summary">
+						{connectedCount} connected
+						{lowestLevel !== null && lowestLevel <= lowThreshold ? ` \u00b7 ${lowestLevel}% low` : ""}
+					</span>
+				)}
 			</div>
 			<div className="qp-body">
 				{loading ? (
@@ -272,45 +307,52 @@ export function ConnectedDevicesPanel({
 					</div>
 				) : empty ? (
 					<div className="qp-empty">
+						<MonitorSmartphone />
 						<span>No devices connected</span>
 					</div>
 				) : (
-					<div ref={listRef} className="qp-list bh-list">
+					<div ref={listRef} className="qp-list cd-list">
 						{groups.map((group) => (
-							<section key={group.key} className={`bh-group ${group.key}`}>
-								<h3 className="bh-group-title">{group.title}</h3>
-								<ul>
+							<section key={group.key} className={`cd-group ${group.key}`}>
+								{/* The PC's card says what it is; a title above it would only repeat it. */}
+								{group.key !== "pc" && <h3 className="cd-group-title">{group.title}</h3>}
+								<ul className="cd-grid">
 									{group.entries.map((entry) => {
 										const lookable = entry.kind === "audio";
 										const open = lookable && expanded === entry.id;
-										const row = (
+										const shape = open ? "wide" : cardShapeInGroup(entry, group.entries);
+										const low = urgentLevel(entry) !== null && urgentLevel(entry)! <= lowThreshold;
+										const main = (
 											<>
-												<span className="bh-art">
+												<span className="cd-art">
 													{entry.art ? (
-														<DeviceArt art={entry.art} phase="play" runId={0} size={30} still />
+														<DeviceArt art={entry.art} phase="play" runId={0} size={36} still />
 													) : (
 														<Laptop />
 													)}
 												</span>
-												<span className="qp-row-text">
-													<span className="qp-row-name">{entry.name}</span>
-													<span className="qp-row-sub">{subText(entry)}</span>
+												<span className="cd-text">
+													<span className="cd-name">{entry.name}</span>
+													<span className="cd-sub">{subText(entry)}</span>
 												</span>
 												{renderLevels(entry)}
 											</>
 										);
 										return (
-											<li key={entry.id} className={`bh-item${open ? " expanded" : ""}`}>
+											<li
+												key={entry.id}
+												className={`cd-card cd-card--${shape}${low ? " low" : ""}${open ? " expanded" : ""}`}
+											>
 												{lookable ? (
 													<button
-														className="bh-row bh-row-button"
+														className="cd-card-main"
 														aria-expanded={open}
 														onClick={() => setExpanded(open ? null : entry.id)}
 													>
-														{row}
+														{main}
 													</button>
 												) : (
-													<div className="bh-row">{row}</div>
+													<div className="cd-card-main">{main}</div>
 												)}
 												{open && renderLooks(entry)}
 											</li>

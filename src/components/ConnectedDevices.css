@@ -1,0 +1,345 @@
+/* The Connected devices panel: a grid of device cards in the command center's style.
+
+   A device with one battery level is a half-width tile, one with several levels (earbuds and
+   their case) or its own status line (this PC) takes the full width, and one with no level is a
+   slim row. The battery bar is the text colour, green while charging and red when low, like the
+   command center's sliders. */
+.cd {
+	--cd-fill: var(--zara-group-bg, rgba(255, 255, 255, 0.08));
+	--cd-low: #ff453a;
+	--cd-charging: #30d158;
+	padding: 12px 18px 18px;
+	gap: 12px;
+	font-family: var(--font-body);
+	font-size: 12px;
+}
+
+.cd-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: none;
+	min-height: 24px;
+}
+
+.cd-header-icon {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--zara-text, white) 12%, transparent);
+}
+
+.cd-header-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.cd-title {
+	flex: 1;
+	font-family: var(--font-display);
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+.cd-summary {
+	font-size: 11.5px;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+	font-variant-numeric: tabular-nums;
+}
+
+.cd-list {
+	gap: 14px;
+	padding-right: 4px;
+}
+
+.cd-group-title {
+	margin: 0 0 6px 2px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.cd-group.low .cd-group-title {
+	color: var(--cd-low);
+}
+
+.cd-grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.cd-card {
+	position: relative;
+	min-width: 0;
+	border-radius: 20px;
+	background: var(--cd-fill);
+	transition: background 0.15s ease;
+}
+
+.cd-card--wide,
+.cd-card--row,
+.cd-card.expanded {
+	grid-column: 1 / -1;
+}
+
+.cd-card.low {
+	background: color-mix(in srgb, var(--cd-low) 16%, var(--cd-fill));
+}
+
+.cd-card-main {
+	display: grid;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 12px 14px;
+	border: none;
+	border-radius: inherit;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+
+button.cd-card-main {
+	cursor: pointer;
+}
+
+button.cd-card-main:hover {
+	background: color-mix(in srgb, var(--zara-text, white) 7%, transparent);
+}
+
+button.cd-card-main:focus-visible,
+.cd-looks .qp-chip:focus-visible {
+	outline: 2px solid var(--zara-accent, #0a84ff);
+	outline-offset: 1px;
+}
+
+/* A tile: the drawing and the level on one line, then the name, status and bar. */
+.cd-card--tile .cd-card-main {
+	grid-template-columns: 1fr auto;
+	grid-template-areas:
+		"art level"
+		"text text";
+	row-gap: 10px;
+	min-height: 96px;
+}
+
+.cd-card--tile .cd-art {
+	grid-area: art;
+}
+
+.cd-card--tile .cd-text {
+	grid-area: text;
+	align-self: end;
+}
+
+.cd-card--tile .cd-level {
+	grid-area: level;
+	align-self: start;
+	align-items: flex-end;
+}
+
+/* The tile's bar runs under the name, the width of the card. */
+.cd-card--tile .cd-level .cd-level-bar {
+	position: absolute;
+	left: 14px;
+	right: 14px;
+	bottom: 11px;
+}
+
+.cd-card--tile .cd-card-main {
+	padding-bottom: 24px;
+}
+
+/* Wide: the drawing and name on the left, and for this PC its level on the right; earbuds'
+   levels run along the bottom. */
+.cd-card--wide .cd-card-main {
+	grid-template-columns: auto 1fr auto;
+	grid-template-areas:
+		"art text level"
+		"levels levels levels";
+	column-gap: 12px;
+	row-gap: 12px;
+	align-items: center;
+}
+
+.cd-card--wide .cd-art {
+	grid-area: art;
+}
+
+.cd-card--wide .cd-text {
+	grid-area: text;
+}
+
+.cd-card--wide > .cd-card-main > .cd-level {
+	grid-area: level;
+	min-width: 84px;
+}
+
+.cd-card--wide .cd-levels {
+	grid-area: levels;
+}
+
+/* Row: no level to show, so it is only the drawing and the name. */
+.cd-card--row .cd-card-main {
+	grid-template-columns: auto 1fr;
+	column-gap: 12px;
+	align-items: center;
+	padding-top: 9px;
+	padding-bottom: 9px;
+}
+
+.cd-art {
+	display: grid;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+}
+
+.cd-art > svg:not(.device-art) {
+	width: 20px;
+	height: 20px;
+	opacity: 0.8;
+}
+
+.cd-text {
+	display: block;
+	min-width: 0;
+}
+
+.cd-name {
+	display: block;
+	overflow: hidden;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.25;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cd-sub {
+	display: block;
+	overflow: hidden;
+	margin-top: 2px;
+	font-size: 11.5px;
+	line-height: 1.3;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* A battery level: the percent over a bar that fills to it. */
+.cd-level {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	min-width: 0;
+}
+
+.cd-level-value {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 1px;
+	font-family: var(--font-display);
+	font-size: 13px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+}
+
+.cd-level.large .cd-level-value {
+	font-size: 20px;
+	letter-spacing: -0.02em;
+}
+
+.cd-level-unit {
+	font-size: 0.6em;
+	font-weight: 600;
+	opacity: 0.6;
+}
+
+.cd-level-label {
+	margin-right: 5px;
+	font-family: var(--font-body);
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--zara-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.cd-level-bolt {
+	align-self: center;
+	width: 11px;
+	height: 11px;
+	margin-right: 3px;
+	color: var(--cd-charging);
+	fill: currentColor;
+	stroke-width: 0;
+}
+
+.cd-level-bar {
+	display: block;
+	height: 4px;
+	border-radius: 2px;
+	background: color-mix(in srgb, var(--zara-text, white) 16%, transparent);
+	overflow: hidden;
+}
+
+.cd-level-bar > span {
+	display: block;
+	height: 100%;
+	border-radius: 2px;
+	background: var(--zara-text, white);
+	opacity: 0.92;
+	transition: width 0.4s ease;
+}
+
+.cd-level.charging .cd-level-bar > span {
+	background: var(--cd-charging);
+	opacity: 1;
+}
+
+.cd-level.low .cd-level-bar > span {
+	background: var(--cd-low);
+	opacity: 1;
+}
+
+.cd-level.low .cd-level-value {
+	color: var(--cd-low);
+}
+
+/* Earbuds: each bud and the case, side by side. */
+.cd-levels {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	gap: 12px;
+}
+
+/* A large level on a wide card sits at its right end. */
+.cd-card--wide > .cd-card-main > .cd-level.large {
+	align-items: flex-end;
+}
+
+.cd-card--wide > .cd-card-main > .cd-level.large .cd-level-bar {
+	align-self: stretch;
+}
+
+/* Audio devices open their "Looks like" choice under the card. */
+.cd-looks {
+	margin: 0;
+	padding: 0 14px 12px 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cd-card,
+	.cd-level-bar > span {
+		transition: none;
+	}
+}

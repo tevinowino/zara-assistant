@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { groupDevices, urgentLevel, type DeviceEntry } from "../src/devices/connectedDevices";
+import { cardShape, cardShapeInGroup, groupDevices, urgentLevel, type DeviceEntry } from "../src/devices/connectedDevices";
 
 const entry = (name: string, kind: string, level: number | null, rest: Partial<DeviceEntry> = {}): DeviceEntry => ({
 	id: name,
@@ -76,5 +76,46 @@ describe("Connected devices groups", () => {
 		expect(
 			titles([entry("B", "audio", null), entry("C", "audio", 60), entry("A", "audio", 30), entry("D", "audio", 30)])
 		).toEqual(["Audio: A, D, C, B"]);
+	});
+});
+
+describe("Connected devices card shapes", () => {
+	test("a device with one battery level is a half-width tile", () => {
+		expect(cardShape(entry("MX Anywhere", "mouse", 64))).toBe("tile");
+	});
+
+	test("earbuds with their own levels get the full width, even when the total is unknown", () => {
+		const buds = { left: { level: 80, charging: false }, right: { level: 78, charging: false }, case: null };
+		expect(cardShape(entry("AirPods Pro", "audio", null, { buds }))).toBe("wide");
+	});
+
+	test("this PC gets the full width for its time left", () => {
+		expect(cardShape(entry("This PC", "pc", 64))).toBe("wide");
+	});
+
+	test("a device with no level is a slim row", () => {
+		expect(cardShape(entry("SanDisk Cruzer Blade", "usb", null, { wired: true }))).toBe("row");
+		expect(cardShape(entry("Gadget", "other", null))).toBe("row");
+	});
+});
+
+describe("Connected devices card shapes within a group", () => {
+	test("a lone tile takes the full width, so its row is not half empty", () => {
+		const watch = entry("Galaxy Watch6", "wearable", 55);
+		expect(cardShapeInGroup(watch, [watch])).toBe("wide");
+	});
+
+	test("two tiles share a row", () => {
+		const watch = entry("Galaxy Watch6", "wearable", 55);
+		const phone = entry("iPhone", "phone", 80);
+		expect(cardShapeInGroup(watch, [watch, phone])).toBe("tile");
+		expect(cardShapeInGroup(phone, [watch, phone])).toBe("tile");
+	});
+
+	test("a row beside a lone tile does not count as its neighbour", () => {
+		const keyboard = entry("Keychron K3", "keyboard", 64);
+		const gamepad = entry("Xbox Controller", "gamepad", null);
+		expect(cardShapeInGroup(keyboard, [keyboard, gamepad])).toBe("wide");
+		expect(cardShapeInGroup(gamepad, [keyboard, gamepad])).toBe("row");
 	});
 });

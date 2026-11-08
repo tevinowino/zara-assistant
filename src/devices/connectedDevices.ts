@@ -128,3 +128,30 @@ export function groupDevices(entries: DeviceEntry[], threshold: number): DeviceG
 		entries: [...(buckets.get(g.key) ?? [])].sort(byUrgency)
 	}));
 }
+
+/**
+ * How a device is drawn in the Connected devices panel:
+ * - `tile`: half the width, for a device with one battery level;
+ * - `wide`: the full width, for a device with several levels to show (earbuds and
+ *   their case) or a status line of its own (this PC's time left);
+ * - `row`: a slim full-width row, for a device with no level to show (a USB drive,
+ *   the headphone jack, a Bluetooth device that does not report one).
+ */
+export type DeviceCardShape = "tile" | "wide" | "row";
+
+export function cardShape(entry: DeviceEntry): DeviceCardShape {
+	if (entry.buds) return "wide";
+	if (entry.kind === "pc") return "wide";
+	return entry.level === null ? "row" : "tile";
+}
+
+/**
+ * The shape of `entry` among the others in its group. A tile with no neighbour would
+ * leave half its row empty, so it takes the full width instead.
+ */
+export function cardShapeInGroup(entry: DeviceEntry, group: DeviceEntry[]): DeviceCardShape {
+	const shape = cardShape(entry);
+	if (shape !== "tile") return shape;
+	const tiles = group.filter((other) => cardShape(other) === "tile");
+	return tiles.length === 1 ? "wide" : "tile";
+}
