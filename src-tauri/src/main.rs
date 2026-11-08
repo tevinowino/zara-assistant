@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod ai;
+mod autostart_repair;
 mod battery;
 mod bluetooth;
 mod buds;
@@ -228,6 +229,7 @@ fn main() {
             // invoke save_setting as soon as it loads, which happens before the
             // rest of this hook runs.
             crate::utils::init_settings_cache(app.handle());
+            autostart_repair::point_at_this_copy(app.handle());
             app.manage(ai::AiState::open(app.handle())?);
             let window = app.get_webview_window("main").unwrap();
             // tao rebuilds the extended style from its own flags whenever one
