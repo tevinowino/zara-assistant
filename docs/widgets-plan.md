@@ -35,11 +35,16 @@ Built, with tests (frontend 1,713, Rust 655, repo guard tests 65; `tsc`, `vite b
 - A real Windows toast through the app's reader to the pill; an interactive Claude Code session (CLI or extension) through to a pill.
 - The music card's blur and glow on the real notch window, and its cost while opening (use `localStorage["zara-frame-probe"]="1"`).
 
-### Still open from the decisions list
+### Decided (2026-11-08)
 
-- Lyrics source and licence comfort (see Phase 3).
-- Whether to move device alerts onto the notification channel.
-- User-installable widgets: not started; the registry does not rule it out.
+- **Lyrics source and licence:** the maintainer is comfortable showing LRCLIB lyrics. They are community-sourced and copyrighted, so the cache stays local (newest 300 songs), only the line in use is shown at a time, and the privacy page says what is sent.
+- **Device alerts:** stay as they are. They carry an animated drawing, battery levels that arrive after the alert, and a click that opens the Bluetooth view, none of which the notification pill has. Moving them would be a large change to working code for no visible gain. If a third kind of alert is ever added, revisit.
+- **Widgets stay built in.** The registry does not rule out user-installable widgets later, but there is no plan for them, so no plugin API, sandbox or stability promise has been designed.
+
+### Still open
+
+- The items under "Not tested" above.
+- The lyric line in the collapsed pill (not built; needs a look at the real notch).
 
 ## The goal
 
