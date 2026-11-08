@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { invoke } from "@tauri-apps/api/core";
 import { Visualizer } from "./notch/components/Visualizer";
+import { formatPlaybackTime, formatTimeRemaining } from "./notch/playback/playbackClock";
+import { usePlaybackClock } from "./notch/playback/usePlaybackClock";
 import {
 	PlayIcon,
 	PauseIcon,
@@ -93,22 +95,6 @@ function TitleMarquee({ title }: { title: string }) {
 	);
 }
 
-function formatTime(ms: number): string {
-	if (ms <= 0) return "0:00";
-	const totalSeconds = Math.floor(ms / 1000);
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = totalSeconds % 60;
-	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
-function formatRemaining(elapsed: number, duration: number): string {
-	const remaining = Math.max(0, duration - elapsed);
-	const totalSeconds = Math.floor(remaining / 1000);
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = totalSeconds % 60;
-	return `-${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
 export function CompactMediaPlayer({
 	mediaInfo,
 	albumArtUrl,
@@ -129,60 +115,24 @@ export function CompactMediaPlayer({
 }: CompactMediaPlayerProps) {
 	const seekRef = useRef<HTMLInputElement>(null);
 
-	const positionMs = mediaInfo.position_ms ?? 0;
 	const durationMs = mediaInfo.duration_ms ?? 0;
 	const seekEnabled = mediaInfo.seek_enabled ?? false;
-	const positionUpdatedAt = mediaInfo.position_updated_at ?? 0;
-
-	// Single source of truth: last known backend position + when it was received
-	const backendPosRef = useRef(positionMs);
-	const backendTimeRef = useRef(positionUpdatedAt || Date.now());
-	const isSeekingRef = useRef(false);
-
-	// Update refs when backend sends new position (ignore during seek)
-	useEffect(() => {
-		if (!isSeekingRef.current) {
-			backendPosRef.current = positionMs;
-			backendTimeRef.current = positionUpdatedAt || Date.now();
-		}
-	}, [positionMs, positionUpdatedAt]);
-
-	// displayPosition is the live, extrapolated position
-	const [displayPosition, setDisplayPosition] = useState(() => {
-		const elapsed = Date.now() - (positionUpdatedAt || Date.now());
-		return Math.min(positionMs + (isPlaying ? elapsed : 0), durationMs || Infinity);
+	const clock = usePlaybackClock({
+		positionMs: mediaInfo.position_ms ?? 0,
+		positionUpdatedAt: mediaInfo.position_updated_at ?? 0,
+		durationMs,
+		isPlaying
 	});
+	const displayPosition = clock.positionMs;
 
-	// Tick: extrapolate position every 250ms
-	useEffect(() => {
-		const tick = () => {
-			if (isSeekingRef.current) return; // don't update during seek
-			const elapsed = isPlaying ? Date.now() - backendTimeRef.current : 0;
-			const pos = Math.min(backendPosRef.current + elapsed, durationMs || Infinity);
-			setDisplayPosition(pos);
-		};
-		tick();
-		const interval = setInterval(tick, 250);
-		return () => clearInterval(interval);
-	}, [isPlaying, durationMs]);
-
-	// Seek handlers
-	const handleSeekStart = useCallback(() => {
-		isSeekingRef.current = true;
-	}, []);
-
-	const handleSeekChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setDisplayPosition(Number(e.target.value));
-	}, []);
+	const handleSeekChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => clock.previewSeek(Number(e.target.value)),
+		[clock]
+	);
 
 	const handleSeekEnd = useCallback(() => {
-		const seekPos = displayPosition;
-		isSeekingRef.current = false;
-		// Update backend refs to the seek position so extrapolation continues from there
-		backendPosRef.current = seekPos;
-		backendTimeRef.current = Date.now();
-		invoke("media_seek", { positionMs: seekPos }).catch(() => {});
-	}, [displayPosition]);
+		invoke("media_seek", { positionMs: clock.commitSeek() }).catch(() => {});
+	}, [clock]);
 
 	const progressPercent = durationMs > 0 ? (displayPosition / durationMs) * 100 : 0;
 
@@ -236,7 +186,7 @@ export function CompactMediaPlayer({
 			{/* Row 2: Progress bar */}
 			{durationMs > 0 && (
 				<div className="cmp-row cmp-row-progress">
-					<span className="cmp-time">{formatTime(displayPosition)}</span>
+					<span className="cmp-time">{formatPlaybackTime(displayPosition)}</span>
 					<div className="cmp-track-bar">
 						<div className="cmp-track-fill" style={{ width: `${progressPercent}%` }} />
 						{seekEnabled && (
@@ -248,8 +198,8 @@ export function CompactMediaPlayer({
 								max={durationMs}
 								step={100}
 								value={displayPosition}
-								onMouseDown={handleSeekStart}
-								onTouchStart={handleSeekStart}
+								onMouseDown={clock.beginSeek}
+								onTouchStart={clock.beginSeek}
 								onChange={handleSeekChange}
 								onMouseUp={handleSeekEnd}
 								onTouchEnd={handleSeekEnd}
@@ -257,7 +207,7 @@ export function CompactMediaPlayer({
 							/>
 						)}
 					</div>
-					<span className="cmp-time">{formatRemaining(displayPosition, durationMs)}</span>
+					<span className="cmp-time">{formatTimeRemaining(displayPosition, durationMs)}</span>
 				</div>
 			)}
 
