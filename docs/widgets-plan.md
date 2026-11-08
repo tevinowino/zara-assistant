@@ -1,6 +1,45 @@
 # Plan: more widgets (Claude Code activity, music lyrics)
 
-Date: 2026-11-08. Status: **plan only, nothing changed yet.** Everything about Zara comes from reading the code. Everything about Claude Code hooks comes from the Claude Code docs (code.claude.com/docs/en/hooks, `/statusline`, `/sessions`, `/vs-code`), fetched 2026-11-08. Anything marked **verify** has not been tested and is checked by a Phase 0 spike.
+Date: 2026-11-08. Status: **built on branch `feat/widgets-platform`; see Status below.** What was planned is kept as written, with corrections where the spikes showed the plan wrong.
+
+## Status (2026-11-08)
+
+Built, with tests (frontend 1,713, Rust 655, repo guard tests 65; `tsc`, `vite build`, `clippy --locked --all-targets` clean):
+
+| Phase | Done |
+|---|---|
+| 1 Widget registry | Notes, Clipboard and Weather draw through `WIDGET_VIEWS` (`src/notch/widgets/`); `NotchPanel` and the picker icons derive from the definitions. Adding a widget is now one definition plus one registry entry |
+| M Music card | `"card"` is a third layout (`MusicCard`, `MusicCardView`, `mediaLayouts.ts`); shared `usePlaybackClock`; the glow takes its colors from the cover (`extractGlowPalette`). Checked in headless Chrome on a red/purple, a bright and a green cover |
+| 2 Notch notifications | `notifications.rs` reads the Action Center; the pill, queue, per-app allowing, text hiding and Settings section are in. Off by default |
+| 3 Lyrics | `lyrics.rs` (LRCLIB, cache, `.lrc` parser, title cleaning) and a Lyrics widget: highlighted line, timing +/- buttons, save a line to Notes, ask Zara about it |
+| 4 Claude Code | `claude_code.rs` (hook script, spool reader, session board, safe `settings.json` editing), a widget, a Settings section with a preview-and-agree connect step, and pill alerts |
+
+### What the spikes found
+
+- **S4, reading Windows notifications from an unpackaged app: works.** `RequestAccessAsync` returned Allowed for a plain unpackaged program; a test toast was seen by polling within about a second. `NotificationChanged` fails to subscribe (0x80070490), as the crate report said, so Zara polls. No installer or packaging change is needed. Option B and C (sparse package, MSIX) are not needed.
+- **S2, LRCLIB:** `/api/get` answers with `trackName`, `artistName`, `duration` (seconds), `instrumental`, `plainLyrics`, `syncedLyrics` (`[mm:ss.xx]`), and a 404 for an unknown track; `/api/search` returns an array. Checked with two public songs. A hit rate over your own library and players has **not** been measured.
+- **S1, Claude Code hooks:** run with Claude Code 2.1.309 on this machine (`claude -p` with a temporary `--settings` file). The PowerShell hook command runs as Claude Code launches it, and `SessionStart`, `UserPromptSubmit` and `SessionEnd` arrived with the expected fields. `Stop` arrives with `last_assistant_message` when the hook is synchronous; as an `async` hook it is killed at exit in print mode (the docs say so), which does not apply to an interactive session. The VS Code extension fires `SessionStart` and `UserPromptSubmit` (this very session shows them); whether it fires `Stop` and `Notification` is **still untested**.
+- **S3, playhead accuracy per player:** not measured. The lyrics timing buttons are the answer if a player runs early or late.
+
+### Corrections to the plan above
+
+- **Stealth.** Stealth excludes Zara's windows from screen capture, so the pill is not captured while it holds. The rule that matters is the opposite one, and it is built: when Stealth is switched on but is **not** holding, the pill (and Claude Code alerts) hide the text.
+- **Hook file.** The plan said the file would be appended with a normal PowerShell cmdlet. The first real run showed it writes a byte-order mark, so the script appends with .NET (no mark) and the reader also strips one.
+- **Key order.** Re-writing Claude Code's `settings.json` would have sorted its keys. `serde_json`'s `preserve_order` is now on, so the file keeps its order; a test pins it.
+- **Lyrics pill ticker** (the current line in the collapsed pill) was **not** built: the pill is about 140 px wide and this needs a look at the real notch. The panel, the line highlight, Save to Notes and Ask Zara are built.
+- **`Notification` events.** `permission_prompt` and `elicitation_dialog` count as "needs you". `idle_prompt` does not alert (it follows a finished turn).
+
+### Not tested
+
+- Nothing here has been run inside the full Tauri app. The pill, the card, the Lyrics and Claude Code widgets and the Settings sections are covered by component and unit tests and (for the card) a browser preview, not by launching Zara.
+- A real Windows toast through the app's reader to the pill; an interactive Claude Code session (CLI or extension) through to a pill.
+- The music card's blur and glow on the real notch window, and its cost while opening (use `localStorage["zara-frame-probe"]="1"`).
+
+### Still open from the decisions list
+
+- Lyrics source and licence comfort (see Phase 3).
+- Whether to move device alerts onto the notification channel.
+- User-installable widgets: not started; the registry does not rule it out.
 
 ## The goal
 
