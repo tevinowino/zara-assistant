@@ -52,7 +52,15 @@ export interface ShelfItem {
 }
 
 /** What the notch is showing: one of the widgets, or one of the views that stand alone. */
-export type ZaraMode = NotchPanel | "music" | "status" | "shelf" | "wifi" | "bluetooth" | "device";
+export type ZaraMode =
+	| NotchPanel
+	| "music"
+	| "status"
+	| "shelf"
+	| "wifi"
+	| "bluetooth"
+	| "device"
+	| "notification";
 
 // A device that just connected or disconnected, shown briefly in the pill.
 export interface DeviceAlert {

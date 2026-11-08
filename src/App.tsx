@@ -70,6 +70,12 @@ import {
 } from "./notch/views/CalendarTimerPanel";
 import { DeviceAlertBubble } from "./notch/views/DeviceAlertBubble";
 import {
+	NOTIFICATION_PILL_HEIGHT_PX,
+	NOTIFICATION_PILL_WIDTH_PX,
+	NotificationPill
+} from "./notch/views/NotificationPill";
+import { useNotchNotifications } from "./notch/notifications/useNotchNotifications";
+import {
 	COMMAND_CENTER_PANEL_WIDTH_PX,
 	commandCenterPanelHeight,
 	ControlsPanel
@@ -251,10 +257,28 @@ function App() {
 	});
 	const { deviceAlert, budsById, deviceAlertOnScreen } = deviceAlerts;
 
+	const stealth = useStealth();
+	const stealthOn = stealth.status?.requested === true;
+	const stealthHolding = stealth.status?.active === true;
+
+	// A Windows notification from an app the user has allowed takes the pill the same way,
+	// for as long as it lasts, and waits its turn behind a device alert.
+	const notifications = useNotchNotifications({
+		windowLabel,
+		notchMode,
+		triggerEventPeek,
+		isOpenRef,
+		zaraModeRef,
+		setZaraMode,
+		protectionLapsed: stealthOn && !stealthHolding
+	});
+	const { notification, notificationOnScreen } = notifications;
+
 	const isAnyInteraction = isHovered || isNotchHovered || isEdgeHovered;
 	const isHidden =
 		!startupAnimating &&
 		!deviceAlertOnScreen &&
+		!notificationOnScreen &&
 		((notchMode === "smart" && isOverlapped && interactionState === "none") ||
 			(notchMode === "peek" && interactionState === "none" && !eventPeek));
 
@@ -597,7 +621,9 @@ function App() {
 			setIsOpen(false);
 		}
 		// Every view but a device alert, which runs its own timer, goes back to resting.
-		setZaraMode((prev) => (prev === "device" ? prev : restingModeRef.current));
+		setZaraMode((prev) =>
+			prev === "device" || prev === "notification" ? prev : restingModeRef.current
+		);
 	};
 
 	// Shared hover-release, called on DOM hover end and when the backend
@@ -684,9 +710,6 @@ function App() {
 		triggerEventPeek
 	});
 	const { timerSeconds, isTimerFinished, formatTimerTime, resetTimer } = timer;
-	const stealth = useStealth();
-	const stealthOn = stealth.status?.requested === true;
-	const stealthHolding = stealth.status?.active === true;
 
 	const media = useMediaPlayback({
 		musicModeEnabled: settingsMusicModeEnabled,
@@ -891,14 +914,14 @@ function App() {
 		}
 	}, [settingsMusicModeEnabled, mediaInfo.has_media, zaraMode, isOpen]);
 
-	// Back to the resting view once the alert is over.
+	// Back to the resting view once the alert or notification is over.
 	useEffect(() => {
-		if (zaraMode === "device" && !deviceAlert) {
+		if ((zaraMode === "device" && !deviceAlert) || (zaraMode === "notification" && !notification)) {
 			setZaraMode(isOpenRef.current ? openingPanel() : collapsedMode);
 		}
 		// openingPanel only reads settings state already in this render.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [zaraMode, deviceAlert, collapsedMode]);
+	}, [zaraMode, deviceAlert, notification, collapsedMode]);
 
 	// The collapsed notch always shows its current live activity: music while a
 	// session exists, the timer (with music in its bubble) once one is set, and
@@ -1226,6 +1249,7 @@ function App() {
 	// Calculate width dynamically based on enabled features
 	const getDynamicWidth = () => {
 		if (zaraMode === "device" && deviceAlert) return 330;
+		if (zaraMode === "notification" && notification) return NOTIFICATION_PILL_WIDTH_PX;
 		if (zaraMode === "ai") return AI_PANEL_WIDTH;
 		if (isCalendarMode) return CALENDAR_TIMER_PANEL_WIDTH_PX;
 		if (zaraMode === "shelf") return 380;
@@ -1259,6 +1283,7 @@ function App() {
 		}
 		// Device alert: the drawing, with room for its motion.
 		if (zaraMode === "device" && deviceAlert) return 76;
+		if (zaraMode === "notification" && notification) return NOTIFICATION_PILL_HEIGHT_PX;
 		// The calendar and timer views are the same size, so the notch never changes
 		// height as the user switches views or browses months.
 		if (zaraMode === "calendar") {
@@ -1511,7 +1536,10 @@ function App() {
 												className="main-row"
 												// A device alert covers the whole pill.
 												style={
-													zaraMode === "device" || deviceAlertOnScreen
+													zaraMode === "device" ||
+													deviceAlertOnScreen ||
+													zaraMode === "notification" ||
+													notificationOnScreen
 														? { visibility: "hidden" }
 														: undefined
 												}
@@ -1885,6 +1913,14 @@ function App() {
 									zaraMode={zaraMode}
 									setIsOpen={setIsOpen}
 									setZaraMode={setZaraMode}
+								/>
+
+								{/* A Windows notification from an allowed app. A click dismisses it. */}
+								<NotificationPill
+									notification={notification}
+									zaraMode={zaraMode}
+									onDismiss={notifications.dismiss}
+									onExited={notifications.onPillExited}
 								/>
 
 								{/* Calendar & Timer Split View */}

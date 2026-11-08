@@ -22,6 +22,17 @@ webview's allowed hosts in line with this list.
 | The search provider OpenRouter uses (Exa unless OpenRouter chooses otherwise) | Web search, only when the assistant decides a question needs it and Settings > Assistant > "Let Zara search the web" is on | Your question, as the search query. OpenRouter runs the search and adds the results to the request. Each search costs about a cent on your OpenRouter account |
 | Google Search (through the Gemini API, when Google is your AI service) | The same web search, using Google's own search instead of OpenRouter's | Your question, as the search query, inside the request to `generativelanguage.googleapis.com`. Google runs the search and the answer ends with links to the pages it used. Search is billed by Google under your key's plan |
 
+## Windows notifications (off by default)
+
+If you turn on "Notification Pill" in Settings > Notch, Zara asks Windows for permission to read the notifications in the Action Center, then shows the ones from apps you allow as a pill in the notch.
+
+- Nothing is read until you turn it on. Turning it off stops the reading at once.
+- What a notification says is held in memory only, long enough to show it. It is not written to disk, logged, sent to the assistant, or sent anywhere else.
+- Notifications that were already in the Action Center when you turned it on are not shown.
+- No app shows a pill until you allow it. Apps you have not allowed are remembered by name only (so Settings can list them), never by what they said.
+- "Show Message Text" off shows only the app's name. The text is also hidden whenever Stealth is switched on but is not holding, because the notch could then be on a shared screen.
+- Zara's own notifications are skipped.
+- Windows still shows its own notification as well; Zara cannot hide it.
 ## Stored on this PC
 
 - Settings: `%APPDATA%\com.zara.app\settings.json`

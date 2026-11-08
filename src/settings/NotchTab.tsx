@@ -8,6 +8,7 @@ import type { WidgetConfig } from "./types";
 import type { NotchPanelChoice } from "./useSettings";
 import { WidgetPicker } from "./WidgetPicker";
 import { QuickAppsSection } from "./QuickAppsSection";
+import { NotificationsSection } from "./NotificationsSection";
 import type { QuickApp } from "../notch/apps/quickApps";
 import type { MediaLayout } from "../notch/music/mediaLayouts";
 import {
@@ -229,6 +230,9 @@ export function NotchTab({
 					</SettingRow>
 				)}
 			</div>
+
+			<div className="setting-group-label">Notifications</div>
+			<NotificationsSection />
 
 			<div className="setting-group-label">Music</div>
 			<div className="setting-group">

@@ -62,6 +62,17 @@ Edit `settings.json` with any text editor while Zara is running. Changes are app
 | `zara-notch-click-to-open` | `"true"` / `"false"` | (legacy) | Old setting read only when `zara-notch-remember-panel` is absent; `"false"` now selects fixed-panel behavior. |
 | `zara-device-looks` | JSON object, device name → `"headphones"` / `"round-buds"` / `"stem-buds"` / `"neckband"` / `"speaker"` for Bluetooth audio; `"headphones-wired"` / `"earbuds-usbc"` / `"earbuds-jack"` / `"speaker"` / `"microphone"` for wired and USB audio | (unset) | The drawing an audio device's connection popup uses, picked under "Looks like" in the notch's Connected devices panel (or, for Bluetooth, its Bluetooth view). Devices without a pick are guessed from their name and class. |
 
+### Notifications
+
+Windows notifications shown in the notch as a pill. Off until the user turns it on in Settings, and then no app shows a pill until the user allows it. See `docs/privacy.md`.
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `zara-notifications-enabled` | `"true"` / `"false"` | `"false"` | Read Windows notifications and show them in the notch. Turning it on asks Windows for permission; if Windows says no, the setting stays off. |
+| `zara-notifications-apps` | JSON array of app ids | `[]` | The apps allowed to show a pill (their AppUserModelIds). No app is allowed by default. |
+| `zara-notifications-seen-apps` | JSON array of `{ "id", "name" }` | `[]` | Apps that have sent a notification, remembered by name only so Settings can list them. Written by Zara; the text of a notification is never saved. At most 40. |
+| `zara-notifications-show-text` | `"true"` / `"false"` | `"true"` | Show the notification's title and text in the pill. `"false"` shows only the app's name. The text is also hidden while Stealth is switched on but not holding. |
+| `zara-notifications-duration-ms` | milliseconds | `"5000"` | How long a pill stays. Kept between 2000 and 15000. |
 ### Shelf
 
 | Key                   | Type                 | Default   | Description                                                                                                    |

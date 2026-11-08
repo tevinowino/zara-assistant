@@ -2805,3 +2805,14 @@ body {
 		display: none;
 	}
 }
+
+/* A button that reads as a link inside a settings note. */
+.settings-link {
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
