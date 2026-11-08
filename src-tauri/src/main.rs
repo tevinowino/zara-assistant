@@ -11,6 +11,7 @@ mod diagnostics;
 mod installed_apps;
 mod jack;
 mod notch_monitor;
+mod notifications;
 mod services;
 mod settings_window;
 mod shortcuts;
@@ -220,6 +221,8 @@ fn main() {
             ai::note_delete,
             stall_probe::record_diagnostic,
             clipboard_history::clipboard_history_enable,
+            notifications::notifications_enable,
+            notifications::open_notification_privacy_settings,
             clipboard_history::clipboard_history_list,
             clipboard_history::clipboard_history_remove,
             clipboard_history::clipboard_history_clear,
