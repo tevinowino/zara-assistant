@@ -83,12 +83,14 @@ The Lyrics widget (turned on with the other widgets in Settings > Notch) and the
 | `zara-card-lyrics` | `"true"` / `"false"` | `"false"` | Show lyrics over the cover on the music card, toggled with the microphone button on the card. While it is on and the card is open, the playing song's artist, title and length are looked up at lrclib.net, even if the Lyrics widget is off. |
 ### Claude Code
 
-The Claude Code widget (turned on with the other widgets in Settings > Notch). Connecting it, in Settings > Notch > Claude Code, adds hooks to Claude Code's own `settings.json` (after showing what will be added, with a copy of the original kept as `settings.json.zara-backup`). Alerts reuse the notification pill, its duration (`zara-notifications-duration-ms`) and its text choice (`zara-notifications-show-text`). See `docs/privacy.md`.
+The Claude Code widget (turned on with the other widgets in Settings > Notch). Connecting it, in Settings > Notch > Claude Code, adds hooks to Claude Code's own `settings.json` (after showing what will be added, with a copy of the original kept as `settings.json.zara-backup`). The Usage view reads Claude Code's transcript files instead (`zara-claude-usage-enabled`). Alerts reuse the notification pill, its duration (`zara-notifications-duration-ms`) and its text choice (`zara-notifications-show-text`). See `docs/privacy.md`.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `zara-claude-code-alert-input` | `"true"` / `"false"` | `"true"` | Show a pill when a Claude Code session waits for permission or an answer. |
 | `zara-claude-code-alert-done` | `"true"` / `"false"` | `"true"` | Show a pill when a Claude Code session finishes its turn. |
+| `zara-claude-usage-enabled` | `"true"` / `"false"` | `"false"` | Let Zara count Claude Code's usage (tokens, messages, tool calls, active hours, estimated cost) by reading its transcript files on this PC, for the Usage view of the Claude Code widget. Only counts are kept, in memory. |
+| `zara-claude-usage-budget-usd` | dollars | (unset) | A monthly budget for the estimated cost, set with "Set budget" in the Usage view. The view turns amber at 80% and red at 100%; nothing else happens. Between 0 and 100000. |
 
 ### Shelf
 

@@ -44,6 +44,16 @@ If you turn on the Claude Code widget and press "Connect" in Settings > Notch > 
 - The state of each session is held in memory only, and is forgotten when the widget is turned off.
 - Nothing leaves your PC. There is no local server: nothing can write to Zara over the network.
 - Alerts hide the project and what Claude said when "Show Message Text" is off, or while Stealth is switched on but not holding.
+## Claude Code usage (off by default)
+
+If you press "Allow" in the Claude Code widget's Usage view (or turn on "Usage Dashboard" in Settings > Notch > Claude Code), Zara reads the transcript files Claude Code keeps in `%USERPROFILE%\.claude\projects\` (or inside `CLAUDE_CONFIG_DIR`) to count your usage.
+
+- Those files hold your conversations. Zara reads past the text and keeps only counts: the tokens of each response, its model, the project folder's name, a session id, the time, and the ids of tool calls. It never keeps, shows or sends what was said.
+- It is held in memory only and forgotten when you turn it off or quit. Nothing is written to disk and nothing leaves your PC.
+- Only files changed in the last two months are read, and only while the widget is on.
+- The cost shown is an estimate: tokens at public API prices, from a table inside Zara. It is not what a subscription charges, and a model not in the table is counted without a cost.
+- The transcript format is Claude Code's own and may change in an update; if it does, the view shows fewer numbers until Zara is updated.
+
 ## Stored on this PC
 
 - Settings: `%APPDATA%\com.zara.app\settings.json`

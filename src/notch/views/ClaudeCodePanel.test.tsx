@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { setInvokeHandler } from "../../test/shims/tauriCore";
 import { emitTauriEvent } from "../../test/shims/tauriEvent";
 import type { ClaudeCodeSession } from "../claudeCode/claudeCodeTypes";
@@ -15,7 +16,63 @@ const session = (overrides: Partial<ClaudeCodeSession> = {}): ClaudeCodeSession 
 	...overrides
 });
 
-describe("ClaudeCodePanel", () => {
+/** The panel open on its Sessions view. */
+async function openSessions() {
+	render(<ClaudeCodePanel zaraMode="claude-code" />);
+	await userEvent.click(screen.getByRole("tab", { name: "Sessions" }));
+}
+
+describe("ClaudeCodePanel views", () => {
+	it("opens on the usage view", () => {
+		render(<ClaudeCodePanel zaraMode="claude-code" />);
+
+		expect(screen.getByRole("tab", { name: "Usage" })).toHaveAttribute("aria-selected", "true");
+		expect(screen.getByRole("tab", { name: "Sessions" })).toHaveAttribute("aria-selected", "false");
+	});
+
+	it("asks permission on the usage view until the user has allowed counting", () => {
+		localStorage.clear();
+
+		render(<ClaudeCodePanel zaraMode="claude-code" />);
+
+		expect(screen.getByText("See your Claude Code usage")).toBeInTheDocument();
+	});
+
+	it("counts nothing until permission is given", () => {
+		localStorage.clear();
+		setInvokeHandler("claude_usage_summary", () => {
+			throw new Error("must not be asked");
+		});
+
+		render(<ClaudeCodePanel zaraMode="claude-code" />);
+
+		expect(screen.getByRole("button", { name: "Allow" })).toBeInTheDocument();
+	});
+
+	it("allows counting and saves it when the user presses Allow", async () => {
+		localStorage.clear();
+		setInvokeHandler("save_setting", () => undefined);
+		setInvokeHandler("claude_usage_summary", () => ({ anyUsage: false }));
+		render(<ClaudeCodePanel zaraMode="claude-code" />);
+
+		await userEvent.click(screen.getByRole("button", { name: "Allow" }));
+
+		expect(localStorage.getItem("zara-claude-usage-enabled")).toBe("true");
+	});
+
+	it("shows the sessions view when it is chosen", async () => {
+		setInvokeHandler("claude_code_sessions", () => []);
+		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
+		render(<ClaudeCodePanel zaraMode="claude-code" />);
+
+		await userEvent.click(screen.getByRole("tab", { name: "Sessions" }));
+
+		expect(await screen.findByText(/No Claude Code sessions yet/)).toBeInTheDocument();
+		expect(screen.getByRole("tab", { name: "Sessions" })).toHaveAttribute("aria-selected", "true");
+	});
+});
+
+describe("ClaudeCodePanel sessions", () => {
 	it("is not drawn on another view", () => {
 		setInvokeHandler("claude_code_sessions", () => [session()]);
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
@@ -29,7 +86,7 @@ describe("ClaudeCodePanel", () => {
 		setInvokeHandler("claude_code_sessions", () => []);
 		setInvokeHandler("claude_code_connection", () => ({ connected: false, settingsPath: null }));
 
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 
 		expect(await screen.findByText(/Claude Code is not connected yet/)).toBeInTheDocument();
 	});
@@ -38,7 +95,7 @@ describe("ClaudeCodePanel", () => {
 		setInvokeHandler("claude_code_sessions", () => []);
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
 
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 
 		expect(await screen.findByText(/No Claude Code sessions yet/)).toBeInTheDocument();
 	});
@@ -56,7 +113,7 @@ describe("ClaudeCodePanel", () => {
 		]);
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
 
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 
 		expect(await screen.findByText("zara")).toBeInTheDocument();
 		expect(screen.getByText("Done")).toBeInTheDocument();
@@ -76,7 +133,7 @@ describe("ClaudeCodePanel", () => {
 		]);
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
 
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 
 		await screen.findByText("one");
 		expect(screen.getByText("Working")).toBeInTheDocument();
@@ -91,7 +148,7 @@ describe("ClaudeCodePanel", () => {
 		]);
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
 
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 
 		expect((await screen.findByText("zara")).closest("li")).toHaveAttribute(
 			"data-state",
@@ -105,7 +162,7 @@ describe("ClaudeCodePanel", () => {
 		]);
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
 
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 
 		expect(await screen.findByText(/5 min/)).toBeInTheDocument();
 	});
@@ -114,7 +171,7 @@ describe("ClaudeCodePanel", () => {
 		let sessions: ClaudeCodeSession[] = [session({ project: "zara", state: "working" })];
 		setInvokeHandler("claude_code_sessions", () => sessions);
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 		expect(await screen.findByText("Working")).toBeInTheDocument();
 
 		sessions = [session({ project: "zara", state: "done", excerpt: "All finished." })];
@@ -132,7 +189,7 @@ describe("ClaudeCodePanel", () => {
 		});
 		setInvokeHandler("claude_code_connection", () => ({ connected: true, settingsPath: null }));
 
-		render(<ClaudeCodePanel zaraMode="claude-code" />);
+		await openSessions();
 
 		expect(await screen.findByText(/No Claude Code sessions yet/)).toBeInTheDocument();
 	});

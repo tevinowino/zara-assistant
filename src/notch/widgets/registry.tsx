@@ -18,6 +18,7 @@ import { useClipboardMonitor } from "../clipboard/useClipboardHistory";
 import type { ZaraMode } from "../types";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
+import { useClaudeUsagePreferences } from "../claudeCode/useClaudeUsagePreferences";
 import { useCardWantsLyrics } from "../lyrics/lyricsStore";
 import { useTrackLyrics } from "../lyrics/useTrackLyrics";
 import type { MediaSnapshot } from "../lyrics/lyricsTypes";
@@ -81,10 +82,18 @@ function ClipboardBackground({ enabled }: WidgetBackgroundProps) {
 	return null;
 }
 
+/**
+ * Follows Claude Code's hooks while the widget is on, and allows the backend to read its
+ * transcripts for the usage view only while the widget is on and the user has allowed counting.
+ */
 function ClaudeCodeBackground({ enabled }: WidgetBackgroundProps) {
+	const { allowed: usageAllowed } = useClaudeUsagePreferences();
 	useEffect(() => {
 		invoke("claude_code_enable", { enabled }).catch(() => {});
 	}, [enabled]);
+	useEffect(() => {
+		invoke("claude_usage_enable", { enabled: enabled && usageAllowed }).catch(() => {});
+	}, [enabled, usageAllowed]);
 	return null;
 }
 

@@ -13,6 +13,7 @@ Built, with tests (frontend 1,713, Rust 655, repo guard tests 65; `tsc`, `vite b
 | 2 Notch notifications | `notifications.rs` reads the Action Center; the pill, queue, per-app allowing, text hiding and Settings section are in. Off by default |
 | 3 Lyrics | `lyrics.rs` (LRCLIB, cache, `.lrc` parser, title cleaning) and a Lyrics widget: highlighted line, timing +/- buttons, save a line to Notes, ask Zara about it |
 | 4 Claude Code | `claude_code.rs` (hook script, spool reader, session board, safe `settings.json` editing), a widget, a Settings section with a preview-and-agree connect step, and pill alerts |
+| 4b Claude Code usage dashboard | A Usage view (the widget's default; Sessions is the second) shaped like the reference design: today's tokens, messages, tool calls and sessions, active hours, this month's estimated cost with an optional budget, and the month by model. `claude_usage.rs` counts it from Claude Code's transcripts, only after the user allows it |
 
 ### What the spikes found
 
@@ -21,6 +22,13 @@ Built, with tests (frontend 1,713, Rust 655, repo guard tests 65; `tsc`, `vite b
 - **S1, Claude Code hooks:** run with Claude Code 2.1.309 on this machine (`claude -p` with a temporary `--settings` file). The PowerShell hook command runs as Claude Code launches it, and `SessionStart`, `UserPromptSubmit` and `SessionEnd` arrived with the expected fields. `Stop` arrives with `last_assistant_message` when the hook is synchronous; as an `async` hook it is killed at exit in print mode (the docs say so), which does not apply to an interactive session. The VS Code extension fires `SessionStart` and `UserPromptSubmit` (this very session shows them); whether it fires `Stop` and `Notification` is **still untested**.
 - **S3, playhead accuracy per player:** not measured. The lyrics timing buttons are the answer if a player runs early or late.
 
+### The usage dashboard (added after the main build)
+
+- **Data:** Claude Code's transcripts (`projects/**/*.jsonl`). Each response is written once per content block with the same message id and token counts, so responses are counted once by message id. Checked on this machine: 4,773 responses; the first read took 7.3 s in a debug build and a second read 85 ms, because only appended bytes are read.
+- **Cost is estimated from a price table**, not taken from Claude Code. The plan said it would use Claude Code's own cost totals; the transcripts only hold those as a running total per session (a few entries, no per-day split), which cannot give today's or this month's cost. The table (`price_for`) comes from the published API prices and goes stale: edit it when a model or price changes. A model not in the table is counted in tokens without a cost, and the view says so.
+- **Size:** 760 x 440 (the reference design is wider); two columns instead of its two wider ones.
+- **Budget** is a local number with an amber and a red state; it sends nothing. **View plan usage** opens `https://claude.ai/settings/usage` in the browser; that address was not verified from here.
+- **Not built:** per-day history beyond today and the month, a price update from the network, budget alerts as pills.
 ### Corrections to the plan above
 
 - **Stealth.** Stealth excludes Zara's windows from screen capture, so the pill is not captured while it holds. The rule that matters is the opposite one, and it is built: when Stealth is switched on but is **not** holding, the pill (and Claude Code alerts) hide the text.

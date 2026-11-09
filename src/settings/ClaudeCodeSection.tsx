@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { BellRing, FileCode } from "../icons/glyphs";
 import type { ClaudeCodeConnection } from "../notch/claudeCode/claudeCodeTypes";
+import { useClaudeUsagePreferences } from "../notch/claudeCode/useClaudeUsagePreferences";
 import { NOTIFICATION_SETTING_KEYS } from "../notch/notifications/notificationPolicy";
 import { useNotificationPreferences } from "../notch/notifications/useNotificationPreferences";
 import { SettingRow } from "./SettingRow";
@@ -20,6 +21,7 @@ export interface ClaudeCodeSectionProps {
  */
 export function ClaudeCodeSection({ widgetOn }: ClaudeCodeSectionProps) {
 	const { preferences, save } = useNotificationPreferences();
+	const usage = useClaudeUsagePreferences();
 	const [connection, setConnection] = useState<ClaudeCodeConnection | null>(null);
 	const [preview, setPreview] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
@@ -58,6 +60,17 @@ export function ClaudeCodeSection({ widgetOn }: ClaudeCodeSectionProps) {
 	return (
 		<>
 			<div className="setting-group">
+				<SettingRow
+					icon={FileCode}
+					label="Usage Dashboard"
+					desc="Count tokens, tool calls and estimated cost from Claude Code's transcript files on this PC. Only counts are kept, never what was said."
+				>
+					<SettingSwitch
+						checked={usage.allowed}
+						onToggle={() => usage.setAllowed(!usage.allowed)}
+					/>
+				</SettingRow>
+
 				<SettingRow
 					icon={FileCode}
 					label="Claude Code"

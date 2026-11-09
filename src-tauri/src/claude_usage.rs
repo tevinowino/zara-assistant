@@ -1219,6 +1219,42 @@ mod tests {
         assert!(summary.month.by_model.is_empty());
     }
 
+    /// A manual check against the transcripts on this machine; run it with
+    /// `cargo test --locked real_transcripts -- --ignored --nocapture`. It prints only numbers.
+    #[test]
+    #[ignore = "reads the real Claude Code folder on this machine"]
+    fn real_transcripts_on_this_machine_add_up() {
+        let config = crate::claude_code::claude_settings_path()
+            .and_then(|settings| settings.parent().map(Path::to_path_buf))
+            .expect("a Claude Code config folder");
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as i64;
+        let mut index = UsageIndex::new();
+
+        let started = std::time::Instant::now();
+        index.refresh(&config, now);
+        let first_read = started.elapsed();
+        let again = std::time::Instant::now();
+        index.refresh(&config, now);
+        let second_read = again.elapsed();
+
+        let summary = index.summarize(now, 0);
+        println!("responses counted: {}", index.len());
+        println!("first read {first_read:?}, second read {second_read:?}");
+        println!(
+            "today: {} tokens, {} messages, {} tool calls, {} sessions, streak {}",
+            summary.today.tokens, summary.today.messages, summary.today.tool_calls, summary.today.sessions, summary.today.streak_days
+        );
+        println!("month: {:.2} USD over {} tokens", summary.month.cost_usd, summary.month.tokens);
+        for model in &summary.month.by_model {
+            println!("  {} ({}): {} tokens, cost {:?}", model.display_name, model.model, model.tokens, model.cost_usd);
+        }
+        println!("unpriced: {:?}", summary.unpriced_models);
+        assert!(second_read <= first_read, "the second read should only look at new bytes");
+    }
+
     #[test]
     fn serializes_for_the_notch_with_camel_case_names() {
         let mut index = UsageIndex::new();

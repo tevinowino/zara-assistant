@@ -28,6 +28,35 @@ describe("ClaudeCodeSection", () => {
 		setInvokeHandler("claude_code_hooks_preview", () => HOOKS_PREVIEW);
 	});
 
+	it("has the usage dashboard off until the user turns it on", async () => {
+		render(<ClaudeCodeSection widgetOn />);
+
+		expect(await screen.findByRole("switch", { name: "Usage Dashboard" })).not.toBeChecked();
+	});
+
+	it("allows counting usage and saves it", async () => {
+		render(<ClaudeCodeSection widgetOn />);
+
+		await userEvent.click(await screen.findByRole("switch", { name: "Usage Dashboard" }));
+
+		await waitFor(() => expect(savedValue("zara-claude-usage-enabled")).toBe("true"));
+	});
+
+	it("shows the usage dashboard on when the user allowed it before", async () => {
+		localStorage.setItem("zara-claude-usage-enabled", "true");
+
+		render(<ClaudeCodeSection widgetOn />);
+
+		expect(await screen.findByRole("switch", { name: "Usage Dashboard" })).toBeChecked();
+	});
+
+	it("allows usage counting without Claude Code being connected", async () => {
+		render(<ClaudeCodeSection widgetOn />);
+		await screen.findByRole("button", { name: "Connect…" });
+
+		expect(screen.getByRole("switch", { name: "Usage Dashboard" })).toBeEnabled();
+	});
+
 	it("offers to connect when Claude Code is not connected", async () => {
 		render(<ClaudeCodeSection widgetOn />);
 

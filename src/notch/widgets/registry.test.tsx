@@ -58,7 +58,7 @@ describe("widgetViewSize", () => {
 	});
 
 	it("gives the size the notch takes while it shows Claude Code", () => {
-		expect(widgetViewSize("claude-code")).toEqual({ widthPx: 380, heightPx: 300 });
+		expect(widgetViewSize("claude-code")).toEqual({ widthPx: 760, heightPx: 440 });
 	});
 
 	it("has no size for a view the notch draws itself", () => {
@@ -87,6 +87,70 @@ describe("WidgetPanels", () => {
 });
 
 describe("WidgetBackgrounds", () => {
+	it("lets the backend count Claude Code's usage while the widget is on and the user allowed it", () => {
+		localStorage.setItem("zara-claude-usage-enabled", "true");
+		setInvokeHandler("clipboard_history_enable", () => null);
+		setInvokeHandler("claude_code_enable", () => undefined);
+		setInvokeHandler("claude_usage_enable", () => undefined);
+
+		render(
+			<WidgetBackgrounds
+				preferences={{ enabled: ["ai", "claude-code"] }}
+				active
+				media={nothingPlaying}
+			/>
+		);
+
+		expect(callsTo("claude_usage_enable").at(-1)?.args).toEqual({ enabled: true });
+	});
+
+	it("does not let the backend count usage when the user has not allowed it", () => {
+		localStorage.clear();
+		setInvokeHandler("clipboard_history_enable", () => null);
+		setInvokeHandler("claude_code_enable", () => undefined);
+		setInvokeHandler("claude_usage_enable", () => undefined);
+
+		render(
+			<WidgetBackgrounds
+				preferences={{ enabled: ["ai", "claude-code"] }}
+				active
+				media={nothingPlaying}
+			/>
+		);
+
+		expect(callsTo("claude_usage_enable").at(-1)?.args).toEqual({ enabled: false });
+	});
+
+	it("does not let the backend count usage while the widget is off, even if the user allowed it", () => {
+		localStorage.setItem("zara-claude-usage-enabled", "true");
+		setInvokeHandler("clipboard_history_enable", () => null);
+		setInvokeHandler("claude_code_enable", () => undefined);
+		setInvokeHandler("claude_usage_enable", () => undefined);
+
+		render(
+			<WidgetBackgrounds preferences={{ enabled: ["ai", "notes"] }} active media={nothingPlaying} />
+		);
+
+		expect(callsTo("claude_usage_enable").at(-1)?.args).toEqual({ enabled: false });
+	});
+
+	it("does not let a window that is not the notch count usage", () => {
+		localStorage.setItem("zara-claude-usage-enabled", "true");
+		setInvokeHandler("clipboard_history_enable", () => null);
+		setInvokeHandler("claude_code_enable", () => undefined);
+		setInvokeHandler("claude_usage_enable", () => undefined);
+
+		render(
+			<WidgetBackgrounds
+				preferences={{ enabled: ["claude-code"] }}
+				active={false}
+				media={nothingPlaying}
+			/>
+		);
+
+		expect(callsTo("claude_usage_enable").at(-1)?.args).toEqual({ enabled: false });
+	});
+
 	it("starts reading Claude Code's hooks while its widget is on", () => {
 		setInvokeHandler("clipboard_history_enable", () => null);
 		setInvokeHandler("claude_code_enable", () => undefined);

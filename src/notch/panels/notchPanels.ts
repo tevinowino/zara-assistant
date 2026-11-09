@@ -98,7 +98,7 @@ const DEFINITIONS = [
 		id: "claude-code",
 		label: "Claude Code",
 		description:
-			"What your Claude Code sessions are doing, with a pill when one needs you or finishes. Connect it in Settings first.",
+			"Your Claude Code usage (tokens, hours, estimated cost) and what each session is doing, with a pill when one needs you or finishes.",
 		icon: FileCode,
 		defaultEnabled: false
 	}
