@@ -9,6 +9,7 @@ import type { LyricsState } from "./lyricsTypes";
  */
 let state: LyricsState = { status: "idle" };
 let retryCount = 0;
+let cardWantsLyrics = false;
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -34,17 +35,32 @@ export const lyricsStore = {
 		notify();
 	},
 	getRetryCount: (): number => retryCount,
+	/**
+	 * The music card is open with its lyrics on, so the lyrics of the playing song should be
+	 * fetched even though the Lyrics widget is off. Set by the card while it is on screen.
+	 */
+	setCardWantsLyrics(wants: boolean) {
+		if (cardWantsLyrics === wants) return;
+		cardWantsLyrics = wants;
+		notify();
+	},
+	getCardWantsLyrics: (): boolean => cardWantsLyrics,
 	subscribe,
 	/** Back to the start; for tests. */
 	reset() {
 		state = { status: "idle" };
 		retryCount = 0;
+		cardWantsLyrics = false;
 		notify();
 	}
 };
 
 export function useLyricsState(): LyricsState {
 	return useSyncExternalStore(subscribe, lyricsStore.get);
+}
+
+export function useCardWantsLyrics(): boolean {
+	return useSyncExternalStore(subscribe, lyricsStore.getCardWantsLyrics);
 }
 
 export function useLyricsRetryCount(): number {

@@ -18,6 +18,7 @@ import { useClipboardMonitor } from "../clipboard/useClipboardHistory";
 import type { ZaraMode } from "../types";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
+import { useCardWantsLyrics } from "../lyrics/lyricsStore";
 import { useTrackLyrics } from "../lyrics/useTrackLyrics";
 import type { MediaSnapshot } from "../lyrics/lyricsTypes";
 import {
@@ -87,8 +88,13 @@ function ClaudeCodeBackground({ enabled }: WidgetBackgroundProps) {
 	return null;
 }
 
+/**
+ * Fetches lyrics while the Lyrics widget is on, and also while the music card is open with its
+ * lyrics button on (the card says so through the lyrics store).
+ */
 function LyricsBackground({ enabled, media }: WidgetBackgroundProps) {
-	useTrackLyrics(enabled, media);
+	const cardWantsLyrics = useCardWantsLyrics();
+	useTrackLyrics(enabled || cardWantsLyrics, media);
 	return null;
 }
 

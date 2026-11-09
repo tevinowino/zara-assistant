@@ -10,8 +10,11 @@ import {
 	VolumeHighIcon,
 	VolumeLowIcon
 } from "../../icons";
+import { Microphone } from "../../icons/glyphs";
+import type { LyricsState } from "../lyrics/lyricsTypes";
 import { formatPlaybackTime, formatTimeRemaining } from "../playback/playbackClock";
 import { TitleMarquee } from "../components/TitleMarquee";
+import { CardLyrics } from "./CardLyrics";
 import "./MusicCard.css";
 
 /**
@@ -25,6 +28,17 @@ const BLUR_STRIP_HEIGHTS_PERCENT = [100, 84, 68, 52, 36, 22];
 export interface SkipAnimation {
 	front: ReturnType<typeof useAnimation>;
 	back: ReturnType<typeof useAnimation>;
+}
+
+/** The card's lyrics button and what it shows when pressed. */
+export interface MusicCardLyrics {
+	/** The lyrics are laid over the cover. */
+	shown: boolean;
+	/** The lyrics button was pressed. */
+	onToggle: () => void;
+	state: LyricsState;
+	/** The index of the line being sung; -1 before the first line starts. */
+	activeIndex: number;
 }
 
 export interface MusicCardProps {
@@ -55,6 +69,8 @@ export interface MusicCardProps {
 	nextAnimation?: SkipAnimation;
 	/** Opens the system's sound output settings. */
 	onOpenAudioOutput: () => void;
+	/** Without it the card has no lyrics button. */
+	lyrics?: MusicCardLyrics;
 }
 
 /**
@@ -82,7 +98,8 @@ export function MusicCard({
 	onNext,
 	previousAnimation,
 	nextAnimation,
-	onOpenAudioOutput
+	onOpenAudioOutput,
+	lyrics
 }: MusicCardProps) {
 	const progressPercent = durationMs > 0 ? Math.min(100, (positionMs / durationMs) * 100) : 0;
 
@@ -111,6 +128,12 @@ export function MusicCard({
 					>
 						<MusicNoteIcon size={56} />
 					</motion.div>
+				)}
+			</AnimatePresence>
+
+			<AnimatePresence>
+				{lyrics?.shown && (
+					<CardLyrics key="lyrics" state={lyrics.state} activeIndex={lyrics.activeIndex} />
 				)}
 			</AnimatePresence>
 
@@ -184,7 +207,13 @@ export function MusicCard({
 							</SlidingIcon>
 						</GlassButton>
 					</div>
-					<div className="mcard-transport-side" />
+					<div className="mcard-transport-side mcard-transport-side-end">
+						{lyrics && (
+							<GlassButton label="Lyrics" onClick={lyrics.onToggle} pressed={lyrics.shown} small>
+								<Microphone size={18} />
+							</GlassButton>
+						)}
+					</div>
 				</div>
 
 				<div className="cmp-volume-row mcard-volume">
@@ -213,18 +242,28 @@ export function MusicCard({
 interface GlassButtonProps {
 	label: string;
 	onClick: () => void;
+	/** A button that stays on: whether it is on. */
+	pressed?: boolean;
 	large?: boolean;
 	small?: boolean;
 	children: ReactNode;
 }
 
 /** A round frosted-glass button over the cover. */
-function GlassButton({ label, onClick, large = false, small = false, children }: GlassButtonProps) {
+function GlassButton({
+	label,
+	onClick,
+	pressed,
+	large = false,
+	small = false,
+	children
+}: GlassButtonProps) {
 	return (
 		<motion.button
 			type="button"
 			className={`mcard-button${large ? " mcard-button-large" : ""}${small ? " mcard-button-small" : ""}`}
 			aria-label={label}
+			aria-pressed={pressed}
 			title={label}
 			onClick={(event) => {
 				event.stopPropagation();

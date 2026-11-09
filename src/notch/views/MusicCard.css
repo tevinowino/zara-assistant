@@ -211,3 +211,102 @@
 	z-index: 0;
 	filter: blur(18px) saturate(1.25);
 }
+
+.mcard-transport-side-end {
+	justify-content: flex-end;
+}
+
+.mcard-button[aria-pressed="true"] {
+	background: rgba(255, 255, 255, 0.4);
+	border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* The lyrics, laid over the cover between the artist and the controls. */
+.mcard-lyrics {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(10px) saturate(1.2);
+}
+
+.mcard-lyrics-body {
+	position: absolute;
+	top: 66px;
+	bottom: 142px;
+	left: 18px;
+	right: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	text-align: center;
+	white-space: normal;
+}
+
+.mcard-lyrics-message {
+	margin: 0;
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.75);
+}
+
+.mcard-lyrics-retry {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+	padding: 5px 12px;
+	border: none;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.18);
+	color: inherit;
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.mcard-lyrics-plain {
+	width: 100%;
+	height: 100%;
+	overflow-y: auto;
+	font-size: 13px;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	color: rgba(255, 255, 255, 0.88);
+	scrollbar-width: thin;
+}
+
+.mcard-lyrics-lines {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.mcard-lyrics-line {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.25;
+	color: rgba(255, 255, 255, 0.5);
+	text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+	transition:
+		color 0.25s ease,
+		font-size 0.25s ease;
+}
+
+.mcard-lyrics-line[data-distance="2"] {
+	color: rgba(255, 255, 255, 0.3);
+}
+
+.mcard-lyrics-line[data-distance="3"] {
+	color: rgba(255, 255, 255, 0.18);
+}
+
+.mcard-lyrics-line.active {
+	font-size: 19px;
+	font-weight: 700;
+	color: #fff;
+}

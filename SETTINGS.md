@@ -75,11 +75,12 @@ Windows notifications shown in the notch as a pill. Off until the user turns it 
 | `zara-notifications-duration-ms` | milliseconds | `"5000"` | How long a pill stays. Kept between 2000 and 15000. |
 ### Lyrics
 
-The Lyrics widget (turned on with the other widgets in Settings > Notch). Each new track's artist, title and length are sent to lrclib.net, and only while the widget is on. See `docs/privacy.md`.
+The Lyrics widget (turned on with the other widgets in Settings > Notch) and the lyrics button on the music card. Each new track's artist, title and length are sent to lrclib.net, and only while the widget is on or the card is open with its lyrics button on. See `docs/privacy.md`.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `zara-lyrics-offset-ms` | milliseconds | `"0"` | How far the lyrics are moved to fit the player: positive shows each line sooner, negative later. Changed with the +/- buttons in the Lyrics panel, in steps of 250, between -5000 and 5000. |
+| `zara-card-lyrics` | `"true"` / `"false"` | `"false"` | Show lyrics over the cover on the music card, toggled with the microphone button on the card. While it is on and the card is open, the playing song's artist, title and length are looked up at lrclib.net, even if the Lyrics widget is off. |
 ### Claude Code
 
 The Claude Code widget (turned on with the other widgets in Settings > Notch). Connecting it, in Settings > Notch > Claude Code, adds hooks to Claude Code's own `settings.json` (after showing what will be added, with a copy of the original kept as `settings.json.zara-backup`). Alerts reuse the notification pill, its duration (`zara-notifications-duration-ms`) and its text choice (`zara-notifications-show-text`). See `docs/privacy.md`.

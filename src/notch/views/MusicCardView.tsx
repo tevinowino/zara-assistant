@@ -1,5 +1,10 @@
 import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useEffect } from "react";
+import { lineToHighlight } from "../lyrics/activeLine";
+import { lyricsStore, useLyricsState } from "../lyrics/lyricsStore";
+import { useCardLyricsPreference } from "../lyrics/useCardLyricsPreference";
+import { useLyricsOffset } from "../lyrics/useLyricsOffset";
 import { usePlaybackClock } from "../playback/usePlaybackClock";
 import type { useMediaPlayback } from "../hooks/useMediaPlayback";
 import { MusicCard } from "./MusicCard";
@@ -35,6 +40,20 @@ export function MusicCardView({ media }: MusicCardViewProps) {
 		isPlaying
 	});
 
+	// The lyrics button: while the card is open with it on, the playing song's lyrics are
+	// looked up, and only then (see the Lyrics widget's background job in widgets/registry).
+	const cardLyrics = useCardLyricsPreference();
+	const lyricsState = useLyricsState();
+	const { offsetMs } = useLyricsOffset();
+	useEffect(() => {
+		lyricsStore.setCardWantsLyrics(cardLyrics.shown);
+		return () => lyricsStore.setCardWantsLyrics(false);
+	}, [cardLyrics.shown]);
+	const activeLyricIndex =
+		lyricsState.status === "synced"
+			? lineToHighlight(lyricsState.lines, clock.positionMs, offsetMs)
+			: -1;
+
 	const finishSeek = useCallback(() => {
 		invoke("media_seek", { positionMs: clock.commitSeek() }).catch(() => {});
 	}, [clock]);
@@ -61,6 +80,12 @@ export function MusicCardView({ media }: MusicCardViewProps) {
 			nextAnimation={{ front: nextFront, back: nextBack }}
 			onOpenAudioOutput={() => {
 				invoke("open_sound_settings").catch(() => {});
+			}}
+			lyrics={{
+				shown: cardLyrics.shown,
+				onToggle: cardLyrics.toggle,
+				state: lyricsState,
+				activeIndex: activeLyricIndex
 			}}
 		/>
 	);
