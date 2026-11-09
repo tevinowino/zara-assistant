@@ -6,6 +6,7 @@ mod battery;
 mod bluetooth;
 mod buds;
 mod claude_code;
+mod claude_usage;
 mod clipboard_history;
 mod commands;
 mod diagnostics;
@@ -229,6 +230,8 @@ fn main() {
             claude_code::claude_code_hooks_preview,
             claude_code::claude_code_connect,
             claude_code::claude_code_disconnect,
+            claude_usage::claude_usage_enable,
+            claude_usage::claude_usage_summary,
             lyrics::lyrics_for_track,
             notifications::notifications_enable,
             notifications::open_notification_privacy_settings,
