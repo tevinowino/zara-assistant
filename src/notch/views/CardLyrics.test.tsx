@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { lyricsStore } from "../lyrics/lyricsStore";
 import type { LyricLine, LyricsState } from "../lyrics/lyricsTypes";
-import { CardLyrics } from "./CardLyrics";
+import { CardLyrics, CardLyricsBackdrop } from "./CardLyrics";
 
 const song: LyricLine[] = [
 	{ timeMs: 1_000, text: "Line one" },
@@ -111,5 +111,33 @@ describe("CardLyrics", () => {
 		await userEvent.click(screen.getByRole("button", { name: /Try again/ }));
 
 		expect(lyricsStore.getRetryCount()).toBe(before + 1);
+	});
+});
+
+describe("CardLyricsBackdrop", () => {
+	it("is decoration: hidden from screen readers and holding no text", () => {
+		const { container } = render(<CardLyricsBackdrop />);
+
+		const backdrop = container.querySelector(".mcard-lyrics-backdrop");
+		expect(backdrop).toHaveAttribute("aria-hidden", "true");
+		expect(backdrop).toHaveTextContent("");
+	});
+
+	it("blurs in several small steps, so the blur grows gradually toward the middle", () => {
+		const { container } = render(<CardLyricsBackdrop />);
+
+		const heights = [...container.querySelectorAll<HTMLElement>(".mcard-lyrics-blur")].map(
+			(strip) => Number.parseFloat(strip.style.height)
+		);
+
+		expect(heights.length).toBeGreaterThanOrEqual(6);
+		expect(heights).toEqual([...heights].sort((a, b) => b - a));
+		expect(new Set(heights).size).toBe(heights.length);
+	});
+
+	it("has a dark band behind the lyrics for contrast", () => {
+		const { container } = render(<CardLyricsBackdrop />);
+
+		expect(container.querySelector(".mcard-lyrics-shade")).toBeInTheDocument();
 	});
 });

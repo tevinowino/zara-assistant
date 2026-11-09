@@ -14,7 +14,7 @@ import { Microphone } from "../../icons/glyphs";
 import type { LyricsState } from "../lyrics/lyricsTypes";
 import { formatPlaybackTime, formatTimeRemaining } from "../playback/playbackClock";
 import { TitleMarquee } from "../components/TitleMarquee";
-import { CardLyrics } from "./CardLyrics";
+import { CardLyrics, CardLyricsBackdrop } from "./CardLyrics";
 import "./MusicCard.css";
 
 /**
@@ -104,7 +104,7 @@ export function MusicCard({
 	const progressPercent = durationMs > 0 ? Math.min(100, (positionMs / durationMs) * 100) : 0;
 
 	return (
-		<div className="mcard">
+		<div className={`mcard${lyrics?.shown ? " mcard-lyrics-on" : ""}`}>
 			<AnimatePresence initial={false}>
 				{artUrl ? (
 					<motion.img
@@ -132,6 +132,7 @@ export function MusicCard({
 			</AnimatePresence>
 
 			<AnimatePresence>
+				{lyrics?.shown && <CardLyricsBackdrop key="lyrics-backdrop" />}
 				{lyrics?.shown && (
 					<CardLyrics key="lyrics" state={lyrics.state} activeIndex={lyrics.activeIndex} />
 				)}

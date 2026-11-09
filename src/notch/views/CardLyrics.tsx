@@ -12,9 +12,41 @@ export interface CardLyricsProps {
 	activeIndex: number;
 }
 
+/** How many strips make the blur behind the lyrics, and how tall each is (% of the card). */
+const BLUR_STRIP_HEIGHTS_PERCENT = [96, 88, 80, 72, 64, 56, 48, 40, 32];
+
+/**
+ * What the lyrics sit on, behind the text: a blur that is strongest in the middle and fades to
+ * the sharp cover toward the top and bottom, under a soft dark band for contrast.
+ *
+ * The blur is a few stacked strips, each shorter than the last and centered on the lyrics, so
+ * the blur grows in small steps from the cover's edges to the middle. (A blur that fades out
+ * by itself would need a mask, which WebView2 draws badly in this app, see
+ * `.notch-ambient-glow`.) It is a separate layer from the text so the text can sit in front of
+ * everything else on the card, including the artist band and the controls' shade.
+ */
+export function CardLyricsBackdrop() {
+	return (
+		<motion.div
+			className="mcard-lyrics-backdrop"
+			aria-hidden="true"
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			exit={{ opacity: 0 }}
+			transition={{ duration: 0.25 }}
+		>
+			{BLUR_STRIP_HEIGHTS_PERCENT.map((height) => (
+				<span key={height} className="mcard-lyrics-blur" style={{ height: `${height}%` }} />
+			))}
+			<span className="mcard-lyrics-shade" />
+		</motion.div>
+	);
+}
+
 /**
  * The lyrics laid over the music card's cover: the line being sung, large and white, with the
- * lines before and after it fading away. A frosted scrim keeps them readable on any cover.
+ * lines before and after it fading away. It draws in front of the card's other layers, so no
+ * line is ever blurred or covered by them.
  */
 export function CardLyrics({ state, activeIndex }: CardLyricsProps) {
 	return (

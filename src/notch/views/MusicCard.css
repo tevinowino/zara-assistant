@@ -221,12 +221,64 @@
 	border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* The lyrics, laid over the cover between the artist and the controls. */
+/* Layers, back to front: the cover, the lyrics' backdrop (1), the artist band and the
+   controls (2), the lyrics themselves (3). The text is last so nothing covers or blurs it. */
+.mcard-top,
+.mcard-bottom {
+	z-index: 2;
+}
+
+/* While lyrics show, the artist band's own blur gives way to the lyrics' backdrop; its dark
+   fade stays so the artist and title remain readable. */
+.mcard-lyrics-on .mcard-blur {
+	display: none;
+}
+
+/* The backdrop: blur strongest behind the lyrics, fading to the sharp cover above and below. */
+.mcard-lyrics-backdrop {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.mcard-lyrics-blur {
+	position: absolute;
+	left: 0;
+	right: 0;
+	/* Centered on the lyrics, which sit about 38% down the card. */
+	top: 38%;
+	transform: translateY(-50%);
+	backdrop-filter: blur(1.4px) saturate(1.1);
+}
+
+.mcard-lyrics-shade {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		to bottom,
+		rgba(0, 0, 0, 0) 14%,
+		rgba(0, 0, 0, 0.42) 30%,
+		rgba(0, 0, 0, 0.5) 40%,
+		rgba(0, 0, 0, 0.42) 52%,
+		rgba(0, 0, 0, 0) 70%
+	);
+}
+
+/* The lyrics, laid over the cover between the artist and the controls, in front of everything. */
 .mcard-lyrics {
 	position: absolute;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.5);
-	backdrop-filter: blur(10px) saturate(1.2);
+	z-index: 3;
+	pointer-events: none;
+}
+
+.mcard-lyrics-retry {
+	pointer-events: auto;
+}
+
+.mcard-lyrics-plain {
+	pointer-events: auto;
 }
 
 .mcard-lyrics-body {
@@ -290,19 +342,19 @@
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 1.25;
-	color: rgba(255, 255, 255, 0.5);
-	text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+	color: rgba(255, 255, 255, 0.6);
+	text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 	transition:
 		color 0.25s ease,
 		font-size 0.25s ease;
 }
 
 .mcard-lyrics-line[data-distance="2"] {
-	color: rgba(255, 255, 255, 0.3);
+	color: rgba(255, 255, 255, 0.4);
 }
 
 .mcard-lyrics-line[data-distance="3"] {
-	color: rgba(255, 255, 255, 0.18);
+	color: rgba(255, 255, 255, 0.28);
 }
 
 .mcard-lyrics-line.active {

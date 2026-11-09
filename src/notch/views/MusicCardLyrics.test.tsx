@@ -169,3 +169,74 @@ describe("MusicCard without a lyrics button", () => {
 		expect(screen.queryByRole("button", { name: "Lyrics" })).not.toBeInTheDocument();
 	});
 });
+
+describe("the layers of the music card while lyrics show", () => {
+	const cardProps: MusicCardProps = {
+		title: "Ghost",
+		artist: "Jhené Aiko",
+		artUrl: "data:image/png;base64,cover",
+		artKey: 1,
+		isPlaying: true,
+		positionMs: 62_000,
+		durationMs: 122_000,
+		seekEnabled: false,
+		onSeekStart: vi.fn(),
+		onSeekChange: vi.fn(),
+		onSeekEnd: vi.fn(),
+		volume: 0.3,
+		onVolumeChange: vi.fn(),
+		onTogglePlayPause: vi.fn(),
+		onPrevious: vi.fn(),
+		onNext: vi.fn(),
+		onOpenAudioOutput: vi.fn()
+	};
+	const synced = {
+		status: "synced" as const,
+		trackKey: "k",
+		lines: [
+			{ timeMs: 1_000, text: "A line before" },
+			{ timeMs: 5_000, text: "The line being sung" }
+		]
+	};
+
+	it("draws a graded backdrop behind the lyrics and marks the card", () => {
+		const { container } = render(
+			<MusicCard
+				{...cardProps}
+				lyrics={{ shown: true, onToggle: vi.fn(), state: synced, activeIndex: 1 }}
+			/>
+		);
+
+		expect(container.querySelector(".mcard")).toHaveClass("mcard-lyrics-on");
+		expect(container.querySelector(".mcard-lyrics-backdrop")).toBeInTheDocument();
+		expect(screen.getByText("The line being sung")).toBeInTheDocument();
+	});
+
+	it("keeps the lyrics outside the artist band and the controls, so nothing blurs or covers them", () => {
+		const { container } = render(
+			<MusicCard
+				{...cardProps}
+				lyrics={{ shown: true, onToggle: vi.fn(), state: synced, activeIndex: 1 }}
+			/>
+		);
+
+		const lyricsText = screen.getByText("The line being sung");
+		expect(lyricsText.closest(".mcard-top")).toBeNull();
+		expect(lyricsText.closest(".mcard-bottom")).toBeNull();
+		expect(lyricsText.closest(".mcard-lyrics")).toBeInTheDocument();
+		expect(container.querySelector(".mcard-lyrics-backdrop .mcard-lyrics-line")).toBeNull();
+	});
+
+	it("has no backdrop and no lyrics mark while the lyrics are hidden", () => {
+		const { container } = render(
+			<MusicCard
+				{...cardProps}
+				lyrics={{ shown: false, onToggle: vi.fn(), state: synced, activeIndex: 1 }}
+			/>
+		);
+
+		expect(container.querySelector(".mcard")).not.toHaveClass("mcard-lyrics-on");
+		expect(container.querySelector(".mcard-lyrics-backdrop")).not.toBeInTheDocument();
+		expect(screen.queryByText("The line being sung")).not.toBeInTheDocument();
+	});
+});
