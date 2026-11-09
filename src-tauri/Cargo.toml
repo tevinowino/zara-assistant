@@ -1,6 +1,6 @@
 [package]
 name = "zara"
-version = "0.5.0"
+version = "0.5.1"
 description = "An AI assistant that lives in your Windows notch"
 authors = ["Tevin Owino"]
 edition = "2021"
